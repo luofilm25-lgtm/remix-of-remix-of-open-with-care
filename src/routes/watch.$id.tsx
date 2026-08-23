@@ -25,7 +25,7 @@ export const Route = createFileRoute("/watch/$id")({
     context.queryClient.ensureQueryData(titleQuery(params.id)).catch(() => undefined),
 
   head: ({ loaderData }) => {
-    if (!loaderData) {
+    if (!loaderData || (loaderData as { unavailable?: boolean }).unavailable) {
       return { meta: [{ title: "Unavailable — LUOFILM" }, { name: "robots", content: "noindex" }] };
     }
     const description =
