@@ -1,4 +1,4 @@
-import { createHash, createHmac } from "node:crypto";
+import { base64ToBytes, bytesToBase64, hmacMd5, md5Hex } from "./md5";
 
 const SECRET = "76iRl07s0xSN9jqmEWAt79EBJZulIQIsV64FZr2O";
 
@@ -14,7 +14,10 @@ const HOSTS = [
 
 const RETRY_STATUS = new Set([403, 406, 407, 429, 500, 502, 503, 504]);
 
-const md5 = (data: string | Buffer) => createHash("md5").update(data).digest("hex");
+const encoder = new TextEncoder();
+const isBrowser = typeof window !== "undefined" && typeof document !== "undefined";
+
+const md5 = (data: string | Uint8Array) => md5Hex(data);
 
 function sortedQuery(url: URL) {
   const keys = [...new Set([...url.searchParams.keys()])].sort();
@@ -27,7 +30,7 @@ function canonicalString(method: string, url: string, body: string | null, ts: n
   const parsed = new URL(url);
   const query = sortedQuery(parsed);
   const canonicalUrl = query ? `${parsed.pathname}?${query}` : parsed.pathname;
-  const bodyBuf = body ? Buffer.from(body) : null;
+  const bodyBuf = body ? encoder.encode(body) : null;
   const bodyHash = bodyBuf ? md5(bodyBuf.subarray(0, 102_400)) : "";
   const bodyLength = bodyBuf ? String(bodyBuf.length) : "";
   return [
@@ -43,10 +46,11 @@ function canonicalString(method: string, url: string, body: string | null, ts: n
 
 function signature(method: string, url: string, body: string | null, ts: number) {
   const padded = SECRET + "=".repeat((4 - (SECRET.length % 4)) % 4);
-  const key = Buffer.from(padded, "base64");
-  const digest = createHmac("md5", key).update(canonicalString(method, url, body, ts)).digest("base64");
+  const key = base64ToBytes(padded);
+  const digest = bytesToBase64(hmacMd5(key, encoder.encode(canonicalString(method, url, body, ts))));
   return `${ts}|2|${digest}`;
 }
+
 
 function randomHex(len: number) {
   let out = "";
