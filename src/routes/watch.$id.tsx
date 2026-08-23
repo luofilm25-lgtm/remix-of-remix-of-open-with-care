@@ -21,7 +21,9 @@ const titleQuery = (id: string) =>
   });
 
 export const Route = createFileRoute("/watch/$id")({
-  loader: ({ context, params }) => context.queryClient.ensureQueryData(titleQuery(params.id)),
+  loader: ({ context, params }) =>
+    context.queryClient.ensureQueryData(titleQuery(params.id)).catch(() => undefined),
+
   head: ({ loaderData }) => {
     if (!loaderData) {
       return { meta: [{ title: "Unavailable — LUOFILM" }, { name: "robots", content: "noindex" }] };
