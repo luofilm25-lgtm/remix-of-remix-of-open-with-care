@@ -63,20 +63,31 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(homeQuery),
+  // Never let a flaky upstream turn SSR into a 500 — the shell renders either way.
+  loader: ({ context }) => context.queryClient.ensureQueryData(homeQuery).catch(() => undefined),
   component: HomePage,
 });
 
 function HomePage() {
-  const { data } = useSuspenseQuery(homeQuery);
+  const { data, refetch } = useSuspenseQuery(homeQuery);
   const slides = data.hero;
   const [index, setIndex] = useState(0);
+
+  // If the server render came back empty (upstream unreachable from the host),
+  // retry straight from the browser so the page still fills in.
+  const degraded = (data as { degraded?: boolean }).degraded === true || slides.length === 0;
+  useEffect(() => {
+    if (!degraded) return;
+    const t = setTimeout(() => void refetch(), 300);
+    return () => clearTimeout(t);
+  }, [degraded, refetch]);
 
   useEffect(() => {
     if (slides.length < 2) return;
     const t = setInterval(() => setIndex((i) => (i + 1) % slides.length), 6000);
     return () => clearInterval(t);
   }, [slides.length]);
+
 
   const slide = slides[Math.min(index, Math.max(slides.length - 1, 0))];
   // Row titles arrive with emoji from upstream; strip them for a clean typographic look.
