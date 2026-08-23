@@ -1,4 +1,4 @@
-import { createHash, createHmac } from "crypto";
+import { createHash, createHmac } from "node:crypto";
 
 const SECRET = "76iRl07s0xSN9jqmEWAt79EBJZulIQIsV64FZr2O";
 
@@ -410,4 +410,25 @@ export async function fetchSources(subjectId: string, season = 0, episode = 0) {
   }
 
   return sources;
+}
+
+/** Placeholder used when the upstream catalog is unreachable during render. */
+export function unavailableTitle(id: string): TitleDetails & { unavailable: true } {
+  return {
+    id,
+    title: "Loading…",
+    type: "movie",
+    year: null,
+    poster: null,
+    backdrop: null,
+    rating: null,
+    genre: null,
+    description: null,
+    duration: null,
+    country: null,
+    language: null,
+    cast: [],
+    seasons: [],
+    unavailable: true,
+  };
 }
