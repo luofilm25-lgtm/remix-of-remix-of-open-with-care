@@ -1,13 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { SearchX } from "lucide-react";
 import { z } from "zod";
+import { Icon3D } from "@/components/Icon3D";
 import { Sidebar } from "@/components/youku/Sidebar";
 import { TopBar } from "@/components/youku/TopBar";
 import { MobileNav } from "@/components/youku/MobileNav";
 import { MediaCard } from "@/components/youku/MediaCard";
 import { GridSkeleton } from "@/components/youku/Skeletons";
 import { searchTitles } from "@/lib/catalog.functions";
+
 
 export const Route = createFileRoute("/search")({
   validateSearch: z.object({ q: z.string().optional() }),
