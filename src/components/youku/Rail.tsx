@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MediaCard } from "./MediaCard";
-import type { CatalogItem } from "@/lib/moviebox.server";
+import type { CatalogItem } from "@/lib/moviebox";
 
 export function Rail({
   title,
