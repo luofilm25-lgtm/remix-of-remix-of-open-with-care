@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import seniorPaulLogo from "@/assets/vj-senior-paul.png.asset.json";
+import seniorPaulLogo from "@/assets/vj-senior-paul.png";
 
 /**
  * Featured VJ chip — matches the category-card design: a wide rounded
@@ -13,7 +13,7 @@ export function VjRail() {
         className="group relative flex h-[74px] w-[210px] shrink-0 items-end overflow-hidden rounded-lg shadow-[0_6px_20px_rgba(0,0,0,0.5)] transition-transform duration-300 hover:-translate-y-0.5"
       >
         <img
-          src={seniorPaulLogo.url}
+          src={seniorPaulLogo}
           alt=""
           aria-hidden
           loading="lazy"

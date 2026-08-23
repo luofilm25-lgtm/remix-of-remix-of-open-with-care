@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Icon3D } from "@/components/Icon3D";
 import { CATEGORIES } from "@/lib/categories";
-import markAsset from "@/assets/luofilm-mark.png.asset.json";
+import markAsset from "@/assets/luofilm-mark.png";
 
 export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -19,7 +19,7 @@ export function Sidebar() {
         to="/"
         className="flex w-full shrink-0 items-center gap-1 border-b border-white/5 bg-black py-2.5 pl-0 pr-2"
       >
-        <img src={markAsset.url} alt="" className="h-8 w-auto shrink-0" loading="eager" />
+        <img src={markAsset} alt="" className="h-8 w-auto shrink-0" loading="eager" />
         <span className="whitespace-nowrap font-[Bebas_Neue,system-ui,sans-serif] text-[17px] leading-none tracking-normal">
           <span className="bg-gradient-to-r from-[#00EAFF] to-[#5CFF00] bg-clip-text text-transparent">
             LUOFILM
