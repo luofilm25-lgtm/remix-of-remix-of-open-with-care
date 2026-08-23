@@ -49,7 +49,17 @@ export const Route = createFileRoute("/watch/$id")({
 
 function WatchPage() {
   const { id } = Route.useParams();
-  const { data: title } = useSuspenseQuery(titleQuery(id));
+  const { data: title, refetch: refetchTitle } = useSuspenseQuery(titleQuery(id));
+
+  // Placeholder returned when the host couldn't reach the catalog — retry client-side.
+  const unavailable = (title as { unavailable?: boolean }).unavailable === true;
+  useEffect(() => {
+    if (!unavailable) return;
+    const t = setTimeout(() => void refetchTitle(), 300);
+    return () => clearTimeout(t);
+  }, [unavailable, refetchTitle]);
+
+
 
   const [season, setSeason] = useState(() => title.seasons[0]?.season ?? 0);
   const [episode, setEpisode] = useState(() => (title.seasons[0] ? 1 : 0));
