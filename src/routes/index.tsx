@@ -24,12 +24,11 @@ const trendingQuery = queryOptions({
   staleTime: 10 * 60 * 1000,
   queryFn: async () => {
     const batches = await Promise.all(
-      TRENDING_KEYWORDS.map((q) =>
-        searchTitles({ data: { q, page: 1 } }).catch(() => ({ items: [] as any[] })),
-      ),
+      TRENDING_KEYWORDS.map((q) => searchTitles({ data: { q, page: 1 } }).catch(() => [])),
     );
     // interleave so each keyword contributes to the top of the rail
-    const lists = batches.map((b: any) => b.items ?? []);
+    const lists = batches.map((b) => b ?? []);
+
     const merged: any[] = [];
     const seen = new Set<string>();
     for (let i = 0; i < 20; i++) {

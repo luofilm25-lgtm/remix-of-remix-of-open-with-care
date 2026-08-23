@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Star } from "lucide-react";
-import type { CatalogItem } from "@/lib/moviebox.server";
+import type { CatalogItem } from "@/lib/moviebox";
 
 export function MediaCard({
   item,

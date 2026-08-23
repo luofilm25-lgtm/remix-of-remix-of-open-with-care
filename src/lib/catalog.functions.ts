@@ -1,56 +1,72 @@
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
+/**
+ * Catalog access layer.
+ *
+ * These run in whichever runtime calls them: during SSR they hit the upstream
+ * from the server, and in the browser they hit it directly (the catalog sends
+ * permissive CORS headers). That keeps the app working on hosts whose egress
+ * IPs the catalog blocks — the shell renders, the browser fills in the data.
+ */
+import {
+  fetchDetails,
+  fetchHome,
+  fetchSources,
+  searchCatalog,
+  unavailableTitle,
+  type CatalogItem,
+  type StreamSource,
+  type TitleDetails,
+} from "./moviebox";
 
-export const getHome = createServerFn({ method: "GET" }).handler(async () => {
-  const { fetchHome } = await import("./moviebox.server");
+export type HomeData = {
+  hero: CatalogItem[];
+  rows: { title: string; items: CatalogItem[] }[];
+  degraded?: boolean;
+};
+
+export async function getHome(): Promise<HomeData> {
   try {
     return await fetchHome();
   } catch (error) {
-    // Upstream catalog unreachable (blocked/flaky host): render the shell with
-    // empty rails instead of failing the whole page render with a 500.
     console.error(error);
-    return { hero: [], rows: [] as { title: string; items: [] }[], degraded: true as const };
+    return { hero: [], rows: [], degraded: true };
   }
-});
+}
 
-export const searchTitles = createServerFn({ method: "GET" })
-  .inputValidator((data) =>
-    z.object({ q: z.string().min(1), page: z.number().int().min(1).default(1) }).parse(data),
-  )
-  .handler(async ({ data }) => {
-    const { searchCatalog } = await import("./moviebox.server");
-    try {
-      return await searchCatalog(data.q, data.page);
-    } catch (error) {
-      console.error(error);
-      return [];
-    }
-  });
+export async function searchTitles({
+  data,
+}: {
+  data: { q: string; page?: number };
+}): Promise<CatalogItem[]> {
+  try {
+    return await searchCatalog(data.q, data.page ?? 1);
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
 
+export async function getTitle({
+  data,
+}: {
+  data: { id: string };
+}): Promise<TitleDetails & { unavailable?: boolean }> {
+  try {
+    return await fetchDetails(data.id);
+  } catch (error) {
+    console.error(error);
+    return unavailableTitle(data.id);
+  }
+}
 
-export const getTitle = createServerFn({ method: "GET" })
-  .inputValidator((data) => z.object({ id: z.string().min(1) }).parse(data))
-  .handler(async ({ data }) => {
-    const { fetchDetails, unavailableTitle } = await import("./moviebox.server");
-    try {
-      return await fetchDetails(data.id);
-    } catch (error) {
-      // Never fail the render: return a placeholder the client can refetch over.
-      console.error(error);
-      return unavailableTitle(data.id);
-    }
-  });
-
-export const getSources = createServerFn({ method: "GET" })
-  .inputValidator((data) =>
-    z.object({ id: z.string().min(1), season: z.number().default(0), episode: z.number().default(0) }).parse(data),
-  )
-  .handler(async ({ data }) => {
-    const { fetchSources } = await import("./moviebox.server");
-    try {
-      return await fetchSources(data.id, data.season, data.episode);
-    } catch (error) {
-      console.error(error);
-      return [];
-    }
-  });
+export async function getSources({
+  data,
+}: {
+  data: { id: string; season?: number; episode?: number };
+}): Promise<StreamSource[]> {
+  try {
+    return await fetchSources(data.id, data.season ?? 0, data.episode ?? 0);
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
