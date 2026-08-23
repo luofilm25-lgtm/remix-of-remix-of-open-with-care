@@ -1,13 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { SearchX } from "lucide-react";
 import { z } from "zod";
+import { Icon3D } from "@/components/Icon3D";
 import { Sidebar } from "@/components/youku/Sidebar";
 import { TopBar } from "@/components/youku/TopBar";
 import { MobileNav } from "@/components/youku/MobileNav";
 import { MediaCard } from "@/components/youku/MediaCard";
 import { GridSkeleton } from "@/components/youku/Skeletons";
 import { searchTitles } from "@/lib/catalog.functions";
+
 
 export const Route = createFileRoute("/search")({
   validateSearch: z.object({ q: z.string().optional() }),
@@ -33,12 +36,25 @@ export const Route = createFileRoute("/search")({
 
 function SearchPage() {
   const { q } = Route.useSearch();
+  const navigate = useNavigate();
+  const [term, setTerm] = useState(q ?? "");
+
+  useEffect(() => {
+    setTerm(q ?? "");
+  }, [q]);
+
   const query = useQuery({
     queryKey: ["search", q],
     queryFn: () => searchTitles({ data: { q: q! } }),
     enabled: Boolean(q),
     staleTime: 60 * 1000,
   });
+
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const next = term.trim();
+    if (next) navigate({ to: "/search", search: { q: next } });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,11 +65,26 @@ function SearchPage() {
         </div>
 
         <main className="px-3 pb-28 sm:px-4 lg:px-8 lg:pb-16">
+          <form
+            onSubmit={submit}
+            className="mt-4 flex h-14 items-center gap-3 rounded-2xl bg-foreground/10 px-4 ring-1 ring-border backdrop-blur-md lg:hidden"
+          >
+            <Icon3D name="search" className="size-6 shrink-0" />
+            <input
+              aria-label="Search movies and series"
+              placeholder="Search movies and series"
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              className="w-full bg-transparent text-base text-foreground outline-none placeholder:text-foreground/50"
+            />
+          </form>
+
           <h1 className="mt-4 text-2xl font-black tracking-tight text-foreground">
             {q ? `Results for "${q}"` : "Search the catalog"}
           </h1>
 
           <div className="mt-6">
+
             {!q ? (
               <p className="text-sm text-muted-foreground">
                 Type a movie or series name in the search bar above to get started.
