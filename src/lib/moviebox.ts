@@ -136,16 +136,20 @@ async function rawRequest(method: "GET" | "POST", path: string, payload?: unknow
     const reversed = [...String(ts)].reverse().join("");
 
     const headers: Record<string, string> = {
-      "user-agent": id.userAgent,
       accept: "application/json",
       "content-type": "application/json",
       "x-client-token": `${ts},${md5(reversed)}`,
       "x-tr-signature": signature(method, url, body, ts),
       "x-client-info": id.clientInfo,
       "x-client-status": "0",
-      "x-forwarded-for": id.ip,
     };
+    // Browsers forbid setting these; only send them from a server runtime.
+    if (!isBrowser) {
+      headers["user-agent"] = id.userAgent;
+      headers["x-forwarded-for"] = id.ip;
+    }
     if (runtimeToken) headers["authorization"] = `Bearer ${runtimeToken}`;
+
 
     try {
       const res = await fetch(url, { method, headers, body: body ?? null });
