@@ -3,7 +3,14 @@ import { z } from "zod";
 
 export const getHome = createServerFn({ method: "GET" }).handler(async () => {
   const { fetchHome } = await import("./moviebox.server");
-  return fetchHome();
+  try {
+    return await fetchHome();
+  } catch (error) {
+    // Upstream catalog unreachable (blocked/flaky host): render the shell with
+    // empty rails instead of failing the whole page render with a 500.
+    console.error(error);
+    return { hero: [], rows: [] as { title: string; items: [] }[], degraded: true as const };
+  }
 });
 
 export const searchTitles = createServerFn({ method: "GET" })
