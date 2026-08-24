@@ -120,7 +120,7 @@ async function ensureToken() {
   await initPromise;
 }
 
-async function request(method: "GET" | "POST", path: string, payload?: unknown): Promise<any> {
+export async function request(method: "GET" | "POST", path: string, payload?: unknown): Promise<any> {
   await ensureToken();
   return rawRequest(method, path, payload);
 }
