@@ -95,7 +95,7 @@ function getIdentity(): Identity {
       net: "NETWORK_WIFI",
       region: "US",
       timezone: "America/New_York",
-      sp_code: "310260",
+      sp_code: "40401",
       "X-Play-Mode": "2",
     }),
     // US egress ranges: the catalog serves its US home layout for these.
