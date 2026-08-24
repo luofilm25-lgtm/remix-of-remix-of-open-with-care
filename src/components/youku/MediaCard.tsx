@@ -58,15 +58,14 @@ export function MediaCard({
             }}
             src={item.poster}
             alt={item.title}
-            loading="lazy"
+            loading="eager"
+            fetchPriority={ready ? "auto" : "high"}
             decoding="async"
             onLoad={() => {
               loadedPosters.add(item.poster!);
               if (!ready) setReady(true);
             }}
-            className={`size-full object-cover transition-opacity duration-300 ${
-              ready ? "opacity-100" : "opacity-0"
-            }`}
+            className="size-full object-cover"
           />
         ) : (
           <div className="grid size-full place-items-center px-2 text-center text-sm text-muted-foreground">
