@@ -382,7 +382,8 @@ export async function fetchSources(subjectId: string, season = 0, episode = 0) {
   const page = isEpisode ? Math.max(1, Math.ceil(episode / 20)) : 1;
   const base = `/wefeed-mobile-bff/subject-api/resource?subjectId=${subjectId}${range}&perPage=20`;
 
-  const data = await request("GET", `${base}&page=${page}`);
+  const data = await request("GET", `${base}&page=${page}`).catch(() => null as any);
+
 
   // The API answers with one resolution at a time; ask for each advertised one.
   const offered: number[] = Array.isArray(data?.collectionResolutions)
