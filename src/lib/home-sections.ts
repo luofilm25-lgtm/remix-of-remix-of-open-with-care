@@ -277,29 +277,40 @@ const norm = (s: string) =>
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 
-/** Look up one real title and return the closest catalog match. */
+/**
+ * Look up one real title and return the closest catalog match.
+ * A match must actually resemble the requested name — otherwise the rail would
+ * fill with unrelated search noise, so we return null and the rail stays honest.
+ */
 async function lookupTitle(title: string, section: HomeSection): Promise<CatalogItem | null> {
   const results = await searchCatalog(title, 1).catch(() => [] as CatalogItem[]);
   const wanted = norm(title);
-  const candidates = results.filter((r) => !!r.poster);
+  const candidates = results.filter(
+    (r) => !!r.poster && !(section.avoidGenre && section.avoidGenre.test(r.genre ?? "")),
+  );
   if (!candidates.length) return null;
 
   const score = (item: CatalogItem) => {
     const name = norm(item.title);
     let s = 0;
     if (name === wanted) s += 100;
-    else if (name.startsWith(wanted) || wanted.startsWith(name)) s += 45;
-    else if (name.includes(wanted)) s += 25;
-    else s -= 40;
-    if (section.type && item.type === section.type) s += 12;
+    else if (name.startsWith(wanted) || wanted.startsWith(name)) s += 55;
+    else if (name.includes(wanted) || wanted.includes(name)) s += 20;
+    else return -1000;
+    if (section.type && item.type === section.type) s += 20;
+    else if (section.type) s -= 25;
     s += Number(item.rating ?? 0) * 3;
     const year = Number(item.year ?? 0);
-    if (year >= 2024) s += 12;
-    else if (year >= 2015) s += 5;
+    if (year >= 2024) s += 10;
+    else if (year >= 2015) s += 4;
     return s;
   };
 
-  return [...candidates].sort((a, b) => score(b) - score(a))[0] ?? null;
+  const best = [...candidates]
+    .map((item) => ({ item, s: score(item) }))
+    .sort((a, b) => b.s - a.s)[0];
+  // Reject weak matches so a rail never shows something unrelated.
+  return best && best.s >= 20 ? best.item : null;
 }
 
 /** Fill a rail either from an explicit title list or from merged search feeds. */
