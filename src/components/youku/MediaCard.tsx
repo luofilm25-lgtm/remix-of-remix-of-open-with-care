@@ -1,6 +1,14 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Star } from "lucide-react";
 import type { CatalogItem } from "@/lib/moviebox";
+
+/**
+ * Posters that already finished decoding this session. Remembering them keeps
+ * artwork visible (and skips the fade-in) when a card scrolls back into view
+ * or its rail re-renders, instead of flashing an empty placeholder again.
+ */
+const loadedPosters = new Set<string>();
 
 export function MediaCard({
   item,
@@ -11,6 +19,8 @@ export function MediaCard({
   block?: boolean;
   rank?: number;
 }) {
+  const [ready, setReady] = useState(() => !item.poster || loadedPosters.has(item.poster));
+
   return (
     <Link
       to="/watch/$id"
@@ -24,7 +34,14 @@ export function MediaCard({
             src={item.poster}
             alt={item.title}
             loading="lazy"
-            className="size-full object-cover"
+            decoding="async"
+            onLoad={() => {
+              loadedPosters.add(item.poster!);
+              if (!ready) setReady(true);
+            }}
+            className={`size-full object-cover transition-opacity duration-300 ${
+              ready ? "opacity-100" : "opacity-0"
+            }`}
           />
         ) : (
           <div className="grid size-full place-items-center px-2 text-center text-sm text-muted-foreground">
