@@ -382,7 +382,8 @@ export async function fetchSources(subjectId: string, season = 0, episode = 0) {
   const page = isEpisode ? Math.max(1, Math.ceil(episode / 20)) : 1;
   const base = `/wefeed-mobile-bff/subject-api/resource?subjectId=${subjectId}${range}&perPage=20`;
 
-  const data = await request("GET", `${base}&page=${page}`);
+  const data = await request("GET", `${base}&page=${page}`).catch(() => null as any);
+
 
   // The API answers with one resolution at a time; ask for each advertised one.
   const offered: number[] = Array.isArray(data?.collectionResolutions)
@@ -401,8 +402,30 @@ export async function fetchSources(subjectId: string, season = 0, episode = 0) {
   );
   lists.push(...others);
 
-  const matchesEpisode = (entry: any) =>
+  // Some titles only answer on page 1 without the season/episode filter, so keep
+  // widening the query until something playable comes back.
+  if (!lists.some((l) => l.length)) {
+    const fallbacks = isEpisode
+      ? [`${base}&page=1`, `/wefeed-mobile-bff/subject-api/resource?subjectId=${subjectId}&page=1&perPage=20`]
+      : [
+          `/wefeed-mobile-bff/subject-api/resource?subjectId=${subjectId}&se=1&ep=1&page=1&perPage=20`,
+          `/wefeed-mobile-bff/subject-api/resource?subjectId=${subjectId}&page=2&perPage=20`,
+        ];
+    for (const path of fallbacks) {
+      const res = await request("GET", path).catch(() => null as any);
+      const list = Array.isArray(res?.list) ? res.list : [];
+      if (list.length) {
+        lists.push(list);
+        break;
+      }
+    }
+  }
+
+  const strict = (entry: any) =>
     !isEpisode || (Number(entry?.se) === season && Number(entry?.ep) === episode);
+  // Prefer exact episode matches; if none exist, accept whatever the API returned.
+  const anyStrict = lists.some((list) => list.some((e) => e?.resourceLink && strict(e)));
+  const matchesEpisode = (entry: any) => (anyStrict ? strict(entry) : true);
 
   // One entry per resolution: prefer H.264 over HEVC, then the largest file.
   const best = new Map<number, StreamSource>();
@@ -425,6 +448,7 @@ export async function fetchSources(subjectId: string, season = 0, episode = 0) {
   }
 
   const sources = [...best.values()].sort((a, b) => b.resolution - a.resolution);
+
 
 
   if (sources.length && !sources[0]!.captions.length) {
@@ -464,4 +488,68 @@ export function unavailableTitle(id: string): TitleDetails & { unavailable: true
     seasons: [],
     unavailable: true,
   };
+}
+
+/**
+ * Related titles for the watch page.
+ *
+ * Genre keyword searches alone return junk (titles literally named "Action",
+ * "Drama"), so results are filtered to real titles that share a genre with the
+ * current one, deduped by normalised name, and ranked by rating.
+ */
+export async function fetchRelated(details: {
+  id: string;
+  title: string;
+  genre: string | null;
+  type: "movie" | "series";
+}): Promise<CatalogItem[]> {
+  const genres = (details.genre ?? "")
+    .split(/[·,/|]/)
+    .map((g) => g.trim())
+    .filter(Boolean);
+
+  const terms = genres.length
+    ? genres.slice(0, 3).map((g) => `${g} ${details.type === "series" ? "series" : "movies"}`)
+    : [details.title];
+  if (genres.length) terms.push(genres.join(" "));
+
+  const pages = await Promise.all(
+    terms.map((q) => searchCatalog(q, 1).catch(() => [] as CatalogItem[])),
+  );
+
+  const norm = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/\[[^\]]*\]/g, "")
+      .replace(/\bs\d+\s*-\s*s?\d+\b/g, "")
+      .replace(/\bseason\s*\d+\b/g, "")
+      .replace(/[^a-z0-9]+/g, "");
+  const generic = new Set(genres.map(norm));
+  const seenId = new Set<string>([details.id]);
+  const seenName = new Set<string>([norm(details.title)]);
+
+  // Round-robin the term results so every genre is represented.
+  const merged: CatalogItem[] = [];
+  const max = Math.max(...pages.map((p) => p.length), 0);
+  for (let i = 0; i < max; i++) {
+    for (const page of pages) {
+      const item = page[i];
+      if (!item) continue;
+      const name = norm(item.title);
+      if (seenId.has(item.id) || seenName.has(name)) continue;
+      if (!item.poster) continue;
+      if (generic.has(name) || name.length < 3) continue; // "Action", "Drama", …
+      const shares =
+        !genres.length ||
+        genres.some((g) => (item.genre ?? "").toLowerCase().includes(g.toLowerCase()));
+      if (!shares) continue;
+      seenId.add(item.id);
+      seenName.add(name);
+      merged.push(item);
+    }
+  }
+
+  return merged
+    .sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0))
+    .slice(0, 18);
 }

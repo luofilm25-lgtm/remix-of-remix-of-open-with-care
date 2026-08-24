@@ -7,7 +7,7 @@ import { TopBar } from "@/components/youku/TopBar";
 import { MobileNav } from "@/components/youku/MobileNav";
 import { Player } from "@/components/youku/Player";
 import { Rail } from "@/components/youku/Rail";
-import { getSources, getTitle, searchTitles } from "@/lib/catalog.functions";
+import { getRelated, getSources, getTitle } from "@/lib/catalog.functions";
 import { streamUrl, subtitleUrl } from "@/lib/download";
 import { TitleActions } from "@/components/youku/TitleActions";
 import { SubscribeGate } from "@/components/youku/SubscribeGate";
@@ -71,36 +71,18 @@ function WatchPage() {
     queryKey: ["sources", id, season, episode],
     queryFn: () => getSources({ data: { id, season, episode } }),
     staleTime: 60 * 1000,
+    retry: 2,
   });
-
-  // "You may also like" mirrors this title's own genres.
-  const genres = useMemo(
-    () =>
-      (title.genre ?? "")
-        .split(/[·,/|]/)
-        .map((g) => g.trim())
-        .filter(Boolean)
-        .slice(0, 3),
-    [title.genre],
-  );
 
   const related = useQuery({
-    queryKey: ["related", genres.length ? genres : [title.title]],
-    queryFn: async () => {
-      const terms = genres.length ? genres : [title.title];
-      const pages = await Promise.all(terms.map((q) => searchTitles({ data: { q } })));
-      const merged: (typeof pages)[number] = [];
-      const max = Math.max(...pages.map((p) => p.length), 0);
-      for (let i = 0; i < max; i++) {
-        for (const page of pages) if (page[i]) merged.push(page[i]!);
-      }
-      const seen = new Set<string>();
-      return merged.filter((item) =>
-        seen.has(item.id) ? false : (seen.add(item.id), true),
-      );
-    },
+    queryKey: ["related", id],
+    queryFn: () =>
+      getRelated({
+        data: { id, title: title.title, genre: title.genre, type: title.type },
+      }),
     staleTime: 5 * 60 * 1000,
   });
+
 
   useEffect(() => {
     const list = sources.data ?? [];
@@ -207,9 +189,7 @@ function WatchPage() {
 
               {!!related.data?.length && (
                 <Rail
-                  title={
-                    genres.length ? `You may also like · ${genres.join(" · ")}` : "You may also like"
-                  }
+                  title="You may also like"
                   items={related.data.filter((item) => item.id !== id).slice(0, 18)}
                 />
               )}
