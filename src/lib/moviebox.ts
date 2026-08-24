@@ -94,11 +94,12 @@ function getIdentity(): Identity {
       system_language: "en",
       net: "NETWORK_WIFI",
       region: "US",
-      timezone: "Asia/Kolkata",
+      timezone: "America/New_York",
       sp_code: "40401",
       "X-Play-Mode": "2",
     }),
-    ip: `${pick(["103.241", "49.36", "117.195", "122.162", "157.32"] as const)}.${
+    // US egress ranges: the catalog serves its US home layout for these.
+    ip: `${pick(["24.60", "66.176", "72.229", "98.115", "173.68"] as const)}.${
       1 + Math.floor(Math.random() * 253)
     }.${1 + Math.floor(Math.random() * 253)}`,
   };
@@ -120,7 +121,7 @@ async function ensureToken() {
   await initPromise;
 }
 
-async function request(method: "GET" | "POST", path: string, payload?: unknown): Promise<any> {
+export async function request(method: "GET" | "POST", path: string, payload?: unknown): Promise<any> {
   await ensureToken();
   return rawRequest(method, path, payload);
 }

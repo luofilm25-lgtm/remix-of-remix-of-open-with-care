@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQueries, useSuspenseQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
 import { Sidebar } from "@/components/youku/Sidebar";
 import { TopBar } from "@/components/youku/TopBar";
@@ -8,7 +8,8 @@ import { MobileNav } from "@/components/youku/MobileNav";
 import { Rail } from "@/components/youku/Rail";
 import { VjRail } from "@/components/youku/VjRail";
 import { isAdultItem } from "@/lib/categories";
-import { getHome, searchTitles } from "@/lib/catalog.functions";
+import { getHome } from "@/lib/catalog.functions";
+import { HOME_SECTIONS, fetchSection } from "@/lib/home-sections";
 
 const homeQuery = queryOptions({
   queryKey: ["home"],
@@ -16,32 +17,7 @@ const homeQuery = queryOptions({
   staleTime: 5 * 60 * 1000,
 });
 
-/** Real trending feed: freshest, most popular titles merged from live searches. */
-const TRENDING_KEYWORDS = ["trending 2026", "best movies 2026", "popular 2026", "new release 2026"];
 
-const trendingQuery = queryOptions({
-  queryKey: ["trending-now"],
-  staleTime: 10 * 60 * 1000,
-  queryFn: async () => {
-    const batches = await Promise.all(
-      TRENDING_KEYWORDS.map((q) => searchTitles({ data: { q, page: 1 } }).catch(() => [])),
-    );
-    // interleave so each keyword contributes to the top of the rail
-    const lists = batches.map((b) => b ?? []);
-
-    const merged: any[] = [];
-    const seen = new Set<string>();
-    for (let i = 0; i < 20; i++) {
-      for (const list of lists) {
-        const item = list[i];
-        if (!item || seen.has(item.id)) continue;
-        seen.add(item.id);
-        merged.push(item);
-      }
-    }
-    return merged.filter((i) => i.poster).slice(0, 30);
-  },
-});
 
 
 export const Route = createFileRoute("/")({
@@ -94,10 +70,32 @@ function HomePage() {
     t.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu, "").trim();
   const clean = <T extends { title: string; genre?: string | null }>(items: T[]) =>
     items.filter((i) => !isAdultItem(i));
-  const liveTrending = useQuery(trendingQuery);
-  const trending = clean((liveTrending.data?.length ? liveTrending.data : data.rows[0]?.items) ?? []);
+  // Curated sections (Popular Series, Most trending, K-Drama, …) filled live.
+  const sectionQueries = useQueries({
+    queries: HOME_SECTIONS.map((section) =>
+      queryOptions({
+        queryKey: ["home-section", section.title],
+        queryFn: () => fetchSection(section),
+        staleTime: 10 * 60 * 1000,
+      }),
+    ),
+  });
 
-  const rows = data.rows.slice(1).filter((r) => !/trending/i.test(r.title));
+  const sections = HOME_SECTIONS.map((section, i) => ({
+    ...section,
+    items: clean(sectionQueries[i]?.data ?? []),
+  })).filter((s) => s.items.length >= 4);
+
+  const trending = sections.find((s) => s.ranked)?.items ?? clean(data.rows[0]?.items ?? []);
+  const rails = sections.filter((s) => !s.ranked);
+  // Any extra upstream rows we don't already cover.
+  const extraRows = data.rows
+    .slice(1)
+    .filter(
+      (r) =>
+        !/trending/i.test(r.title) &&
+        !HOME_SECTIONS.some((s) => cleanTitle(r.title).toLowerCase() === s.title.toLowerCase()),
+    );
 
   return (
     <div className="min-h-screen bg-background">
@@ -182,7 +180,10 @@ function HomePage() {
         </div>
 
         <main className="pb-28 pl-3 sm:pl-4 lg:pb-16 lg:pl-8">
-          {rows.map((row) => (
+          {rails.map((row) => (
+            <Rail key={row.title} title={row.title} items={row.items} />
+          ))}
+          {extraRows.map((row) => (
             <Rail key={row.title} title={cleanTitle(row.title)} items={clean(row.items)} />
           ))}
         </main>
