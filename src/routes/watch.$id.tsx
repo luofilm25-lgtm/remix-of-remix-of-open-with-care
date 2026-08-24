@@ -7,7 +7,7 @@ import { TopBar } from "@/components/youku/TopBar";
 import { MobileNav } from "@/components/youku/MobileNav";
 import { Player } from "@/components/youku/Player";
 import { Rail } from "@/components/youku/Rail";
-import { getSources, getTitle, searchTitles } from "@/lib/catalog.functions";
+import { getRelated, getSources, getTitle } from "@/lib/catalog.functions";
 import { streamUrl, subtitleUrl } from "@/lib/download";
 import { TitleActions } from "@/components/youku/TitleActions";
 import { SubscribeGate } from "@/components/youku/SubscribeGate";
@@ -188,9 +188,7 @@ function WatchPage() {
 
               {!!related.data?.length && (
                 <Rail
-                  title={
-                    genres.length ? `You may also like · ${genres.join(" · ")}` : "You may also like"
-                  }
+                  title="You may also like"
                   items={related.data.filter((item) => item.id !== id).slice(0, 18)}
                 />
               )}
