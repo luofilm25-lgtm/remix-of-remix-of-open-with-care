@@ -70,10 +70,32 @@ function HomePage() {
     t.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu, "").trim();
   const clean = <T extends { title: string; genre?: string | null }>(items: T[]) =>
     items.filter((i) => !isAdultItem(i));
-  const liveTrending = useQuery(trendingQuery);
-  const trending = clean((liveTrending.data?.length ? liveTrending.data : data.rows[0]?.items) ?? []);
+  // Curated sections (Popular Series, Most trending, K-Drama, …) filled live.
+  const sectionQueries = useQueries({
+    queries: HOME_SECTIONS.map((section) =>
+      queryOptions({
+        queryKey: ["home-section", section.title],
+        queryFn: () => fetchSection(section),
+        staleTime: 10 * 60 * 1000,
+      }),
+    ),
+  });
 
-  const rows = data.rows.slice(1).filter((r) => !/trending/i.test(r.title));
+  const sections = HOME_SECTIONS.map((section, i) => ({
+    ...section,
+    items: clean(sectionQueries[i]?.data ?? []),
+  })).filter((s) => s.items.length >= 4);
+
+  const trending = sections.find((s) => s.ranked)?.items ?? clean(data.rows[0]?.items ?? []);
+  const rails = sections.filter((s) => !s.ranked);
+  // Any extra upstream rows we don't already cover.
+  const extraRows = data.rows
+    .slice(1)
+    .filter(
+      (r) =>
+        !/trending/i.test(r.title) &&
+        !HOME_SECTIONS.some((s) => cleanTitle(r.title).toLowerCase() === s.title.toLowerCase()),
+    );
 
   return (
     <div className="min-h-screen bg-background">
