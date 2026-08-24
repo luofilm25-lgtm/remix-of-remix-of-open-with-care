@@ -86,16 +86,21 @@ function HomePage() {
     items: clean(sectionQueries[i]?.data ?? []),
   })).filter((s) => s.items.length >= 4);
 
-  const trending = sections.find((s) => s.ranked)?.items ?? clean(data.rows[0]?.items ?? []);
-  const rails = sections.filter((s) => !s.ranked);
+  // Real trending straight from the catalog's own trending rail.
+  const upstreamTrending = clean(data.trending ?? []);
+  const rankedSection = sections.find((s) => s.ranked);
+  const trending = upstreamTrending.length >= 4 ? upstreamTrending : (rankedSection?.items ?? []);
+  const comingSoon = clean(data.comingSoon ?? []);
+  const rails = sections.filter((s) => !s.ranked || s.items !== trending);
   // Any extra upstream rows we don't already cover.
   const extraRows = data.rows
     .slice(1)
     .filter(
       (r) =>
-        !/trending/i.test(r.title) &&
+        !/trending|coming soon/i.test(r.title) &&
         !HOME_SECTIONS.some((s) => cleanTitle(r.title).toLowerCase() === s.title.toLowerCase()),
     );
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -181,12 +186,21 @@ function HomePage() {
 
         <main className="pb-28 pl-3 sm:pl-4 lg:pb-16 lg:pl-8">
           {rails.map((row) => (
-            <Rail key={row.title} title={row.title} items={row.items} />
+            <div key={row.title}>
+              <Rail title={row.title} items={row.items} {...(row.ranked ? { ranked: true } : {})} />
+              {row.title === "Gangster" && !!comingSoon.length && (
+                <Rail title="Coming Soon" items={comingSoon} />
+              )}
+            </div>
           ))}
+          {!rails.some((r) => r.title === "Gangster") && !!comingSoon.length && (
+            <Rail title="Coming Soon" items={comingSoon} />
+          )}
           {extraRows.map((row) => (
             <Rail key={row.title} title={cleanTitle(row.title)} items={clean(row.items)} />
           ))}
         </main>
+
       </div>
       <MobileNav />
     </div>

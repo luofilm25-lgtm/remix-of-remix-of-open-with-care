@@ -36,19 +36,32 @@ export function MediaCard({
             {rank}
           </span>
         )}
-        <span
-          className={`absolute right-1 top-1 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase leading-tight ${
-            item.type === "series" ? "badge-hot" : "badge-vip"
-          }`}
-        >
-          {item.type === "series" ? "Series" : "Movie"}
-        </span>
-        {item.rating && (
+        {item.appointmentDate ? (
+          <span className="absolute left-0 top-0 grid w-9 place-items-center rounded-br-lg bg-[hsl(150_70%_45%)] px-1 py-1 text-[11px] font-bold leading-tight text-background">
+            <span>{new Date(item.appointmentDate).toLocaleString("en-US", { month: "short" })}</span>
+            <span className="text-[13px]">{new Date(item.appointmentDate).getUTCDate()}</span>
+          </span>
+        ) : (
+          <span
+            className={`absolute right-1 top-1 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase leading-tight ${
+              item.type === "series" ? "badge-hot" : "badge-vip"
+            }`}
+          >
+            {item.type === "series" ? "Series" : "Movie"}
+          </span>
+        )}
+        {item.appointmentDate && item.booked ? (
+          <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-background/70 py-0.5 text-[10px] font-semibold text-foreground backdrop-blur-md">
+            {item.booked.toLocaleString()} booked
+          </span>
+        ) : null}
+        {item.rating && !item.appointmentDate && (
           <span className="absolute bottom-1 right-1 flex items-center gap-1 rounded bg-background/80 px-1.5 py-0.5 text-[11px] font-semibold text-foreground backdrop-blur-md">
             <Star className="size-3 fill-current" />
             {item.rating}
           </span>
         )}
+
       </div>
       <p className="mt-2 truncate text-[13px] text-muted-foreground transition-colors group-hover:text-foreground">
         {item.title}
