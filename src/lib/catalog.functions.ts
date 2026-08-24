@@ -20,6 +20,8 @@ import {
 export type HomeData = {
   hero: CatalogItem[];
   rows: { title: string; items: CatalogItem[] }[];
+  trending?: CatalogItem[];
+  comingSoon?: CatalogItem[];
   degraded?: boolean;
 };
 
@@ -28,9 +30,10 @@ export async function getHome(): Promise<HomeData> {
     return await fetchHome();
   } catch (error) {
     console.error(error);
-    return { hero: [], rows: [], degraded: true };
+    return { hero: [], rows: [], trending: [], comingSoon: [], degraded: true };
   }
 }
+
 
 export async function searchTitles({
   data,

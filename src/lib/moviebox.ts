@@ -184,6 +184,10 @@ export type CatalogItem = {
   backdrop: string | null;
   rating: string | null;
   genre: string | null;
+  /** Upcoming release date (Coming Soon rail), ISO-ish string from the catalog. */
+  appointmentDate?: string | null;
+  /** How many users pre-booked an upcoming title. */
+  booked?: number | null;
 };
 
 const cleanTitle = (raw: string) =>
@@ -203,8 +207,11 @@ export function toItem(subject: any): CatalogItem | null {
     backdrop: subject.stills?.url ?? subject.cover?.url ?? null,
     rating: subject.imdbRatingValue ? String(subject.imdbRatingValue) : null,
     genre: subject.genre ? String(subject.genre).split(",").slice(0, 3).join(" · ") : null,
+    appointmentDate: subject.appointmentDate ? String(subject.appointmentDate) : null,
+    booked: typeof subject.viewers === "number" ? subject.viewers : null,
   };
 }
+
 
 export async function fetchHome() {
   const data = await request("GET", "/wefeed-mobile-bff/tab-operating?page=1&tabId=0&version=");
@@ -212,6 +219,9 @@ export async function fetchHome() {
 
   const hero: CatalogItem[] = [];
   const rows: { title: string; items: CatalogItem[] }[] = [];
+  // Real upstream trending rail ("🔥Trending Now") and the appointment list.
+  let trending: CatalogItem[] = [];
+  let comingSoon: CatalogItem[] = [];
   const seen = new Set<string>();
 
   for (const block of items) {
@@ -236,13 +246,27 @@ export async function fetchHome() {
     if (Array.isArray(block?.groups)) {
       for (const group of block.groups) if (Array.isArray(group?.subjects)) group.subjects.forEach(push);
     }
+    const title = String(block?.title || "Popular now");
+    if (block?.type === "APPOINTMENT_LIST" || /coming soon/i.test(title)) {
+      if (subjects.length) comingSoon = [...comingSoon, ...subjects];
+      continue;
+    }
+    if (/trending/i.test(title) && subjects.length >= 4 && trending.length < 18) {
+      trending = [...trending, ...subjects];
+    }
     if (subjects.length >= 4) {
-      rows.push({ title: String(block?.title || "Popular now"), items: subjects.slice(0, 18) });
+      rows.push({ title, items: subjects.slice(0, 18) });
     }
   }
 
-  return { hero: hero.slice(0, 5), rows: rows.slice(0, 8) };
+  return {
+    hero: hero.slice(0, 5),
+    rows: rows.slice(0, 10),
+    trending: trending.slice(0, 20),
+    comingSoon: comingSoon.slice(0, 20),
+  };
 }
+
 
 export async function searchCatalog(keyword: string, page = 1) {
   const data = await request("POST", "/wefeed-mobile-bff/subject-api/search/v2", {
