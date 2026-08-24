@@ -73,34 +73,15 @@ function WatchPage() {
     staleTime: 60 * 1000,
   });
 
-  // "You may also like" mirrors this title's own genres.
-  const genres = useMemo(
-    () =>
-      (title.genre ?? "")
-        .split(/[·,/|]/)
-        .map((g) => g.trim())
-        .filter(Boolean)
-        .slice(0, 3),
-    [title.genre],
-  );
-
   const related = useQuery({
-    queryKey: ["related", genres.length ? genres : [title.title]],
-    queryFn: async () => {
-      const terms = genres.length ? genres : [title.title];
-      const pages = await Promise.all(terms.map((q) => searchTitles({ data: { q } })));
-      const merged: (typeof pages)[number] = [];
-      const max = Math.max(...pages.map((p) => p.length), 0);
-      for (let i = 0; i < max; i++) {
-        for (const page of pages) if (page[i]) merged.push(page[i]!);
-      }
-      const seen = new Set<string>();
-      return merged.filter((item) =>
-        seen.has(item.id) ? false : (seen.add(item.id), true),
-      );
-    },
+    queryKey: ["related", id],
+    queryFn: () =>
+      getRelated({
+        data: { id, title: title.title, genre: title.genre, type: title.type },
+      }),
     staleTime: 5 * 60 * 1000,
   });
+
 
   useEffect(() => {
     const list = sources.data ?? [];
