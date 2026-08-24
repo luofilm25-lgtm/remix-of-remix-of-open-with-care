@@ -180,7 +180,10 @@ function HomePage() {
         </div>
 
         <main className="pb-28 pl-3 sm:pl-4 lg:pb-16 lg:pl-8">
-          {rows.map((row) => (
+          {rails.map((row) => (
+            <Rail key={row.title} title={row.title} items={row.items} />
+          ))}
+          {extraRows.map((row) => (
             <Rail key={row.title} title={cleanTitle(row.title)} items={clean(row.items)} />
           ))}
         </main>
