@@ -72,11 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
     const ping = () => {
-      void fdb
-        .from("profiles")
-        .update({ last_seen: new Date().toISOString() })
-        .eq("id", user.id)
-        .catch?.(() => {});
+      void (async () => {
+        await fdb.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", user.id);
+      })().catch(() => {});
     };
     ping();
     const timer = setInterval(() => {
