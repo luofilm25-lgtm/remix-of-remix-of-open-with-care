@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Users, Crown, Wallet, Film, Tv, Activity } from "lucide-react";
 import { db as supabase } from "@/lib/db";
 import { money, seriesByDay, timeAgo } from "@/lib/admin";
+import { walletBalance } from "@/lib/relworx";
 import { Empty, Panel, SoftArea, Stat } from "./ui";
 
 export type AdminTab = "overview" | "users" | "content" | "wallet" | "settings";
@@ -31,6 +32,14 @@ export function Overview({ go }: { go: (t: AdminTab) => void }) {
   const q = useQuery({ queryKey: ["admin-overview"], queryFn: loadOverview });
   const d = q.data;
 
+  // Real money sitting in the Relworx wallet, refreshed every half minute.
+  const wallet = useQuery({
+    queryKey: ["relworx-balance"],
+    queryFn: () => walletBalance(),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+
   const now = Date.now();
   const activeSubs = (d?.subs ?? []).filter(
     (s) => s.status === "active" && (!s.expires_at || new Date(s.expires_at).getTime() > now),
@@ -49,13 +58,21 @@ export function Overview({ go }: { go: (t: AdminTab) => void }) {
   );
   const userChart = seriesByDay(d?.profiles ?? [], 14);
 
+  // Anyone whose profile pinged in the last 5 minutes counts as online now.
+  const onlineNow = (d?.profiles ?? []).filter(
+    (p) => p.last_seen && now - new Date(p.last_seen).getTime() < 5 * 60 * 1000,
+  ).length;
+  const activeToday = (d?.profiles ?? []).filter(
+    (p) => p.last_seen && now - new Date(p.last_seen).getTime() < 24 * 60 * 60 * 1000,
+  ).length;
+
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Stat
           label="Total users"
           value={(d?.profiles.length ?? 0).toLocaleString()}
-          sub="Tap to manage users"
+          sub={`${onlineNow.toLocaleString()} online now · ${activeToday.toLocaleString()} active today`}
           tone="violet"
           icon={<Users className="size-4" />}
           onClick={() => go("users")}
@@ -63,15 +80,25 @@ export function Overview({ go }: { go: (t: AdminTab) => void }) {
         <Stat
           label="Active members"
           value={activeSubs.length.toLocaleString()}
-          sub={`${d?.subs.length ?? 0} subscriptions total`}
+          sub={`${d?.subs.length ?? 0} subscriptions · ${onlineNow.toLocaleString()} watching now`}
           tone="gold"
           icon={<Crown className="size-4" />}
           onClick={() => go("users")}
         />
         <Stat
           label="Wallet balance"
-          value={money(revenue - paidOut)}
-          sub={`${money(revenue)} earned · ${money(paidOut)} out`}
+          value={
+            wallet.isLoading
+              ? "…"
+              : wallet.data == null
+                ? money(revenue - paidOut)
+                : money(wallet.data)
+          }
+          sub={
+            wallet.data == null
+              ? `${money(revenue)} earned · ${money(paidOut)} out`
+              : `Live Relworx wallet · ${money(revenue)} earned`
+          }
           tone="mint"
           icon={<Wallet className="size-4" />}
           onClick={() => go("wallet")}

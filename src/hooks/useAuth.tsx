@@ -68,6 +68,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return stop;
   }, [tick]);
 
+  // Presence heartbeat so the admin dashboard's "online now" count is real.
+  useEffect(() => {
+    if (!user) return;
+    const ping = () => {
+      void (async () => {
+        await fdb.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", user.id);
+      })().catch(() => {});
+    };
+    ping();
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") ping();
+    }, 60_000);
+    const onVisible = () => document.visibilityState === "visible" && ping();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [user]);
+
   const signOut = useCallback(async () => {
     await db.auth.signOut();
   }, []);
