@@ -402,8 +402,30 @@ export async function fetchSources(subjectId: string, season = 0, episode = 0) {
   );
   lists.push(...others);
 
-  const matchesEpisode = (entry: any) =>
+  // Some titles only answer on page 1 without the season/episode filter, so keep
+  // widening the query until something playable comes back.
+  if (!lists.some((l) => l.length)) {
+    const fallbacks = isEpisode
+      ? [`${base}&page=1`, `/wefeed-mobile-bff/subject-api/resource?subjectId=${subjectId}&page=1&perPage=20`]
+      : [
+          `/wefeed-mobile-bff/subject-api/resource?subjectId=${subjectId}&se=1&ep=1&page=1&perPage=20`,
+          `/wefeed-mobile-bff/subject-api/resource?subjectId=${subjectId}&page=2&perPage=20`,
+        ];
+    for (const path of fallbacks) {
+      const res = await request("GET", path).catch(() => null as any);
+      const list = Array.isArray(res?.list) ? res.list : [];
+      if (list.length) {
+        lists.push(list);
+        break;
+      }
+    }
+  }
+
+  const strict = (entry: any) =>
     !isEpisode || (Number(entry?.se) === season && Number(entry?.ep) === episode);
+  // Prefer exact episode matches; if none exist, accept whatever the API returned.
+  const anyStrict = lists.some((list) => list.some((e) => e?.resourceLink && strict(e)));
+  const matchesEpisode = (entry: any) => (anyStrict ? strict(entry) : true);
 
   // One entry per resolution: prefer H.264 over HEVC, then the largest file.
   const best = new Map<number, StreamSource>();
@@ -426,6 +448,7 @@ export async function fetchSources(subjectId: string, season = 0, episode = 0) {
   }
 
   const sources = [...best.values()].sort((a, b) => b.resolution - a.resolution);
+
 
 
   if (sources.length && !sources[0]!.captions.length) {
