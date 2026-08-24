@@ -77,7 +77,7 @@ export function SettingsTab() {
               </p>
               <div className="space-y-2">
                 {plans[tier].map((p, i) => (
-                  <div key={p.id} className="grid gap-2 rounded-2xl bg-white/65 p-3 sm:grid-cols-[1.2fr_1fr_.7fr]">
+                  <div key={p.id} className="grid gap-2 rounded-2xl bg-white/65 p-3 sm:grid-cols-[1.2fr_1fr_.7fr_.7fr]">
                     <input className={softField} value={p.name} onChange={(e) => editPlan(tier, i, { name: e.target.value })} placeholder="Plan name" />
                     <input
                       className={softField}
