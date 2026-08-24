@@ -94,11 +94,12 @@ function getIdentity(): Identity {
       system_language: "en",
       net: "NETWORK_WIFI",
       region: "US",
-      timezone: "Asia/Kolkata",
-      sp_code: "40401",
+      timezone: "America/New_York",
+      sp_code: "310260",
       "X-Play-Mode": "2",
     }),
-    ip: `${pick(["103.241", "49.36", "117.195", "122.162", "157.32"] as const)}.${
+    // US egress ranges: the catalog serves its US home layout for these.
+    ip: `${pick(["24.60", "66.176", "72.229", "98.115", "173.68"] as const)}.${
       1 + Math.floor(Math.random() * 253)
     }.${1 + Math.floor(Math.random() * 253)}`,
   };
