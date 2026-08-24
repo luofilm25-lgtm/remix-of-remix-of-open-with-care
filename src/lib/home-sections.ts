@@ -18,6 +18,8 @@ export type HomeSection = {
   keywords?: string[];
   /** Keep only items whose catalog genre matches. */
   genre?: RegExp;
+  /** Drop items whose catalog genre matches this (e.g. animation in live-action rails). */
+  avoidGenre?: RegExp;
   type?: "movie" | "series";
   /** Keep only items released on/after this year. */
   minYear?: number;
