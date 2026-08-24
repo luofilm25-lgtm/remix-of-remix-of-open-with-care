@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQueries, useSuspenseQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
 import { Sidebar } from "@/components/youku/Sidebar";
 import { TopBar } from "@/components/youku/TopBar";
@@ -8,7 +8,8 @@ import { MobileNav } from "@/components/youku/MobileNav";
 import { Rail } from "@/components/youku/Rail";
 import { VjRail } from "@/components/youku/VjRail";
 import { isAdultItem } from "@/lib/categories";
-import { getHome, searchTitles } from "@/lib/catalog.functions";
+import { getHome } from "@/lib/catalog.functions";
+import { HOME_SECTIONS, fetchSection } from "@/lib/home-sections";
 
 const homeQuery = queryOptions({
   queryKey: ["home"],
@@ -16,32 +17,7 @@ const homeQuery = queryOptions({
   staleTime: 5 * 60 * 1000,
 });
 
-/** Real trending feed: freshest, most popular titles merged from live searches. */
-const TRENDING_KEYWORDS = ["trending 2026", "best movies 2026", "popular 2026", "new release 2026"];
 
-const trendingQuery = queryOptions({
-  queryKey: ["trending-now"],
-  staleTime: 10 * 60 * 1000,
-  queryFn: async () => {
-    const batches = await Promise.all(
-      TRENDING_KEYWORDS.map((q) => searchTitles({ data: { q, page: 1 } }).catch(() => [])),
-    );
-    // interleave so each keyword contributes to the top of the rail
-    const lists = batches.map((b) => b ?? []);
-
-    const merged: any[] = [];
-    const seen = new Set<string>();
-    for (let i = 0; i < 20; i++) {
-      for (const list of lists) {
-        const item = list[i];
-        if (!item || seen.has(item.id)) continue;
-        seen.add(item.id);
-        merged.push(item);
-      }
-    }
-    return merged.filter((i) => i.poster).slice(0, 30);
-  },
-});
 
 
 export const Route = createFileRoute("/")({
