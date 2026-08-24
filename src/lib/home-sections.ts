@@ -297,8 +297,11 @@ async function lookupTitle(title: string, section: HomeSection): Promise<Catalog
     else if (name.startsWith(wanted) || wanted.startsWith(name)) s += 55;
     else if (name.includes(wanted) || wanted.includes(name)) s += 20;
     else return -1000;
-    if (section.type && item.type === section.type) s += 20;
-    else if (section.type) s -= 25;
+    // A rail that asks for series must not fall back to a movie / music clip.
+    if (section.type && item.type !== section.type) return -1000;
+    // Long trailing noise ("… (Official Video)") means it is a different work.
+    const extra = name.length - wanted.length;
+    if (extra > 14) s -= Math.min(80, extra * 2);
     s += Number(item.rating ?? 0) * 3;
     const year = Number(item.year ?? 0);
     if (year >= 2024) s += 10;
