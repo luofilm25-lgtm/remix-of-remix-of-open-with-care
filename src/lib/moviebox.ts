@@ -517,7 +517,13 @@ export async function fetchRelated(details: {
     terms.map((q) => searchCatalog(q, 1).catch(() => [] as CatalogItem[])),
   );
 
-  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const norm = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/\[[^\]]*\]/g, "")
+      .replace(/\bs\d+\s*-\s*s?\d+\b/g, "")
+      .replace(/\bseason\s*\d+\b/g, "")
+      .replace(/[^a-z0-9]+/g, "");
   const generic = new Set(genres.map(norm));
   const seenId = new Set<string>([details.id]);
   const seenName = new Set<string>([norm(details.title)]);
