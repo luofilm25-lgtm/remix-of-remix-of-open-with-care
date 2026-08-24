@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ArrowDownToLine, Wallet, TrendingUp, Receipt } from "lucide-react";
 import { db as supabase } from "@/lib/db";
 import { fullDate, money, seriesByDay } from "@/lib/admin";
+import { walletBalance } from "@/lib/relworx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Empty, Panel, Pill, SoftArea, Stat, goldBtn, softField } from "./ui";
 
@@ -43,7 +44,15 @@ export function WalletTab() {
 
   const earned = (q.data?.tx ?? []).filter((t) => t.status === "success").reduce((s, t) => s + Number(t.amount), 0);
   const paidOut = (q.data?.wd ?? []).filter((w) => w.status !== "rejected").reduce((s, w) => s + Number(w.amount), 0);
-  const balance = earned - paidOut;
+  // The withdrawable amount is whatever Relworx actually holds; the ledger
+  // difference is only a fallback when the payment service is unreachable.
+  const live = useQuery({
+    queryKey: ["relworx-balance"],
+    queryFn: () => walletBalance(),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+  const balance = live.data ?? earned - paidOut;
   const chart = seriesByDay((q.data?.tx ?? []).filter((t) => t.status === "success"), 21, (t) => Number(t.amount));
 
   const profileOf = (uid: string | null) => (q.data?.profiles ?? []).find((p) => p.id === uid);
@@ -77,7 +86,13 @@ export function WalletTab() {
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Available balance" value={money(balance)} tone="mint" sub="Ready to withdraw" icon={<Wallet className="size-4" />} />
+        <Stat
+          label="Available balance"
+          value={live.isLoading && live.data == null ? "…" : money(balance)}
+          tone="mint"
+          sub={live.data == null ? "Ledger estimate · service offline" : "Live Relworx balance"}
+          icon={<Wallet className="size-4" />}
+        />
         <Stat label="Total earned" value={money(earned)} tone="gold" sub={`${q.data?.tx.length ?? 0} transactions`} icon={<TrendingUp className="size-4" />} />
         <Stat label="Withdrawn" value={money(paidOut)} tone="rose" sub={`${q.data?.wd.length ?? 0} requests`} icon={<ArrowDownToLine className="size-4" />} />
         <Stat
