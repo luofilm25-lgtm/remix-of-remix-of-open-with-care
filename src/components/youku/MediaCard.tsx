@@ -36,6 +36,8 @@ export function MediaCard({
   rank?: number;
 }) {
   const [ready, setReady] = useState(() => !item.poster || loadedPosters.has(item.poster));
+  // Warm this poster immediately, even before the card is scrolled into view.
+  if (item.poster && !loadedPosters.has(item.poster)) preloadPosters([item]);
 
   return (
     <Link
