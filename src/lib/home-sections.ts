@@ -329,6 +329,7 @@ export async function fetchSection(section: HomeSection): Promise<CatalogItem[]>
     !!item.poster &&
     (!section.type || item.type === section.type) &&
     (!section.genre || section.genre.test(item.genre ?? "")) &&
+    !(section.avoidGenre && section.avoidGenre.test(item.genre ?? "")) &&
     (!section.minYear || Number(item.year) >= section.minYear);
 
   const filtered = batches.map((list) => list.filter(keep));
