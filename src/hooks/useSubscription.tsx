@@ -115,7 +115,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           await pingDevice(user.id);
           return;
         }
-        if (rest.length >= deviceLimit) {
+        // Device limits only apply to paying members: an unsubscribed account
+        // may sign in anywhere (it just can't play), so nobody gets kicked out.
+        if (subscribed && rest.length >= deviceLimit) {
           setOthers(rest);
           setDeviceBlocked(true);
           return;
