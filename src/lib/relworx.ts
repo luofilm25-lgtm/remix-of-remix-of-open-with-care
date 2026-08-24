@@ -97,3 +97,16 @@ export function readStatus(payload: any): {
     return { status: "failed", message: message || "Payment failed" };
   return { status: "pending", message: message || "Waiting for confirmation" };
 }
+
+/** Live Relworx wallet balance in UGX; null when the service is unreachable. */
+export async function walletBalance(currency = CURRENCY_CODE): Promise<number | null> {
+  try {
+    const res = await relworx.balance(currency);
+    const raw =
+      res?.balance ?? res?.data?.balance ?? res?.wallet?.balance ?? res?.available_balance;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}

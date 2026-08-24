@@ -31,6 +31,13 @@ export function MediaCard({
       <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-muted ring-1 ring-border transition-transform duration-200 group-hover:-translate-y-1 group-hover:ring-brand">
         {item.poster ? (
           <img
+            ref={(el) => {
+              // Cached images can finish before React attaches onLoad.
+              if (el?.complete && el.naturalWidth > 0 && !ready) {
+                loadedPosters.add(item.poster!);
+                setReady(true);
+              }
+            }}
             src={item.poster}
             alt={item.title}
             loading="lazy"
