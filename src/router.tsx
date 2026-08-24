@@ -3,7 +3,19 @@ import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
 export const getRouter = () => {
-  const queryClient = new QueryClient();
+  // Keep fetched rows (and therefore their already-loaded posters) around so
+  // scrolling or refocusing the tab never blanks artwork that is on screen.
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 60 * 60 * 1000,
+      },
+    },
+  });
+
 
   const router = createRouter({
     routeTree,
