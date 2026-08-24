@@ -489,3 +489,61 @@ export function unavailableTitle(id: string): TitleDetails & { unavailable: true
     unavailable: true,
   };
 }
+
+/**
+ * Related titles for the watch page.
+ *
+ * Genre keyword searches alone return junk (titles literally named "Action",
+ * "Drama"), so results are filtered to real titles that share a genre with the
+ * current one, deduped by normalised name, and ranked by rating.
+ */
+export async function fetchRelated(details: {
+  id: string;
+  title: string;
+  genre: string | null;
+  type: "movie" | "series";
+}): Promise<CatalogItem[]> {
+  const genres = (details.genre ?? "")
+    .split(/[·,/|]/)
+    .map((g) => g.trim())
+    .filter(Boolean);
+
+  const terms = genres.length
+    ? genres.slice(0, 3).map((g) => `${g} ${details.type === "series" ? "series" : "movies"}`)
+    : [details.title];
+  if (genres.length) terms.push(genres.join(" "));
+
+  const pages = await Promise.all(
+    terms.map((q) => searchCatalog(q, 1).catch(() => [] as CatalogItem[])),
+  );
+
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const generic = new Set(genres.map(norm));
+  const seenId = new Set<string>([details.id]);
+  const seenName = new Set<string>([norm(details.title)]);
+
+  // Round-robin the term results so every genre is represented.
+  const merged: CatalogItem[] = [];
+  const max = Math.max(...pages.map((p) => p.length), 0);
+  for (let i = 0; i < max; i++) {
+    for (const page of pages) {
+      const item = page[i];
+      if (!item) continue;
+      const name = norm(item.title);
+      if (seenId.has(item.id) || seenName.has(name)) continue;
+      if (!item.poster) continue;
+      if (generic.has(name) || name.length < 3) continue; // "Action", "Drama", …
+      const shares =
+        !genres.length ||
+        genres.some((g) => (item.genre ?? "").toLowerCase().includes(g.toLowerCase()));
+      if (!shares) continue;
+      seenId.add(item.id);
+      seenName.add(name);
+      merged.push(item);
+    }
+  }
+
+  return merged
+    .sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0))
+    .slice(0, 18);
+}
