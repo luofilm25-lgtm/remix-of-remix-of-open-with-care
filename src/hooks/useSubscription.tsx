@@ -124,13 +124,17 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
         // The plan's allowance goes to the devices that claimed it first; any
         // extra device is asked to sign one of the others out.
+        const limit = Math.max(1, deviceLimit);
+        if (!mine) {
+          setDeviceBlocked(rest.length >= limit);
+          return;
+        }
         const order = [...rows].sort((a, b) =>
           String(a.created_at ?? a.last_seen ?? "").localeCompare(
             String(b.created_at ?? b.last_seen ?? ""),
           ),
         );
-        const allowed = order.slice(0, Math.max(1, deviceLimit));
-        setDeviceBlocked(!allowed.some(isThisDevice));
+        setDeviceBlocked(!order.slice(0, limit).some(isThisDevice));
       } catch {
         /* the registry must never break playback */
       }
