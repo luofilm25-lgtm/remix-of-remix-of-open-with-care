@@ -10,6 +10,22 @@ import type { CatalogItem } from "@/lib/moviebox";
  */
 const loadedPosters = new Set<string>();
 
+/**
+ * Warms posters into the browser cache the moment a rail's data arrives, so the
+ * artwork is already decoded before the card scrolls into view.
+ */
+export function preloadPosters(items: { poster?: string | null }[]) {
+  if (typeof window === "undefined") return;
+  for (const it of items) {
+    const src = it.poster;
+    if (!src || loadedPosters.has(src)) continue;
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => loadedPosters.add(src);
+    img.src = src;
+  }
+}
+
 export function MediaCard({
   item,
   block = false,
@@ -20,6 +36,8 @@ export function MediaCard({
   rank?: number;
 }) {
   const [ready, setReady] = useState(() => !item.poster || loadedPosters.has(item.poster));
+  // Warm this poster immediately, even before the card is scrolled into view.
+  if (item.poster && !loadedPosters.has(item.poster)) preloadPosters([item]);
 
   return (
     <Link
@@ -40,15 +58,14 @@ export function MediaCard({
             }}
             src={item.poster}
             alt={item.title}
-            loading="lazy"
+            loading="eager"
+            fetchPriority={ready ? "auto" : "high"}
             decoding="async"
             onLoad={() => {
               loadedPosters.add(item.poster!);
               if (!ready) setReady(true);
             }}
-            className={`size-full object-cover transition-opacity duration-300 ${
-              ready ? "opacity-100" : "opacity-0"
-            }`}
+            className="size-full object-cover"
           />
         ) : (
           <div className="grid size-full place-items-center px-2 text-center text-sm text-muted-foreground">

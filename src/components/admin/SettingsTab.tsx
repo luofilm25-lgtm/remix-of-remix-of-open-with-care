@@ -77,7 +77,7 @@ export function SettingsTab() {
               </p>
               <div className="space-y-2">
                 {plans[tier].map((p, i) => (
-                  <div key={p.id} className="grid gap-2 rounded-2xl bg-white/65 p-3 sm:grid-cols-[1.2fr_1fr_.7fr]">
+                  <div key={p.id} className="grid gap-2 rounded-2xl bg-white/65 p-3 sm:grid-cols-[1.2fr_1fr_.7fr_.7fr]">
                     <input className={softField} value={p.name} onChange={(e) => editPlan(tier, i, { name: e.target.value })} placeholder="Plan name" />
                     <input
                       className={softField}
@@ -94,7 +94,15 @@ export function SettingsTab() {
                       placeholder="Days"
                     />
                     <input
-                      className={`${softField} sm:col-span-3`}
+                      className={softField}
+                      inputMode="numeric"
+                      title="Devices allowed at the same time"
+                      value={String(Number(p.devices ?? 1) || 1)}
+                      onChange={(e) => editPlan(tier, i, { devices: Number(e.target.value) || 1 })}
+                      placeholder="Devices"
+                    />
+                    <input
+                      className={`${softField} sm:col-span-4`}
                       value={p.note}
                       onChange={(e) => editPlan(tier, i, { note: e.target.value })}
                       placeholder="Short description"

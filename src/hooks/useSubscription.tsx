@@ -109,20 +109,32 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         if (!alive) return;
         const mine = rows.find(isThisDevice);
         const rest = rows.filter((r) => !isThisDevice(r));
-        if (mine) {
-          setDeviceBlocked(false);
-          setOthers(rest);
-          await pingDevice(user.id);
-          return;
-        }
-        if (rest.length >= deviceLimit) {
-          setOthers(rest);
-          setDeviceBlocked(true);
-          return;
-        }
-        await touchDevice(user.id);
+
+        // Always keep this browser registered so the list is honest.
+        if (mine) await pingDevice(user.id);
+        else await touchDevice(user.id);
         setOthers(rest);
-        setDeviceBlocked(false);
+
+        // Device limits only apply to paying members: an unsubscribed account
+        // may sign in anywhere (it simply cannot play), so nobody is kicked out.
+        if (!subscribed) {
+          setDeviceBlocked(false);
+          return;
+        }
+
+        // The plan's allowance goes to the devices that claimed it first; any
+        // extra device is asked to sign one of the others out.
+        const limit = Math.max(1, deviceLimit);
+        if (!mine) {
+          setDeviceBlocked(rest.length >= limit);
+          return;
+        }
+        const order = [...rows].sort((a, b) =>
+          String(a.created_at ?? a.last_seen ?? "").localeCompare(
+            String(b.created_at ?? b.last_seen ?? ""),
+          ),
+        );
+        setDeviceBlocked(!order.slice(0, limit).some(isThisDevice));
       } catch {
         /* the registry must never break playback */
       }
@@ -134,7 +146,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       alive = false;
       window.clearInterval(id);
     };
-  }, [user, deviceLimit, tick, signOut]);
+  }, [user, deviceLimit, subscribed, tick, signOut]);
 
   /** Serverless payment resume: finishes payments even after a refresh. */
   useEffect(() => {

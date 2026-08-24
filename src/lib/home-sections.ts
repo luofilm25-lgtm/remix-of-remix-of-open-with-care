@@ -18,6 +18,8 @@ export type HomeSection = {
   keywords?: string[];
   /** Keep only items whose catalog genre matches. */
   genre?: RegExp;
+  /** Drop items whose catalog genre matches this (e.g. animation in live-action rails). */
+  avoidGenre?: RegExp;
   type?: "movie" | "series";
   /** Keep only items released on/after this year. */
   minYear?: number;
@@ -143,11 +145,15 @@ export const HOME_SECTIONS: HomeSection[] = [
       "House of the Dragon",
       "The Lord of the Rings: The Rings of Power",
       "The Witcher",
-      "The Pendragon Cycle",
       "The Wheel of Time",
       "Dune: Prophecy",
       "The Sandman",
+      "Shadow and Bone",
+      "His Dark Materials",
+      "Rings of Power",
     ],
+    type: "series",
+    avoidGenre: /animation|anime/i,
   },
   {
     title: "Sitcom",
@@ -179,14 +185,17 @@ export const HOME_SECTIONS: HomeSection[] = [
     title: "Superhero Series",
     titles: [
       "Lanterns",
-      "Spider-Noir",
       "The Boys",
-      "Invincible",
       "Peacemaker",
-      "Batman",
       "Daredevil: Born Again",
-      "Superman",
+      "The Penguin",
+      "Gen V",
+      "Titans",
+      "Doom Patrol",
+      "Superman & Lois",
+      "The Flash",
     ],
+    type: "series",
   },
   {
     title: "Must-watch Black Shows",
@@ -196,10 +205,13 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Ruthless",
       "All American",
       "Power Book III: Raising Kanan",
-      "Diarra from Detroit",
       "The Chi",
-      "Nemesis",
+      "Sistas",
+      "Snowfall",
+      "Bel-Air",
+      "Queen Sugar",
     ],
+    type: "series",
   },
   {
     title: "Romance",
@@ -210,14 +222,17 @@ export const HOME_SECTIONS: HomeSection[] = [
     title: "Teen Fantasy",
     titles: [
       "Avatar: The Last Airbender",
-      "One Piece",
       "Stranger Things",
       "IT: Welcome to Derry",
       "Percy Jackson and the Olympians",
       "Wednesday",
-      "A Wrinkle in Time",
-      "Dark",
+      "Shadow and Bone",
+      "Locke & Key",
+      "The Vampire Diaries",
+      "Teen Wolf",
+      "Fate: The Winx Saga",
     ],
+    avoidGenre: /animation|anime/i,
   },
   {
     title: "Anime [English Dubbed]",
@@ -262,29 +277,43 @@ const norm = (s: string) =>
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 
-/** Look up one real title and return the closest catalog match. */
+/**
+ * Look up one real title and return the closest catalog match.
+ * A match must actually resemble the requested name — otherwise the rail would
+ * fill with unrelated search noise, so we return null and the rail stays honest.
+ */
 async function lookupTitle(title: string, section: HomeSection): Promise<CatalogItem | null> {
   const results = await searchCatalog(title, 1).catch(() => [] as CatalogItem[]);
   const wanted = norm(title);
-  const candidates = results.filter((r) => !!r.poster);
+  const candidates = results.filter(
+    (r) => !!r.poster && !(section.avoidGenre && section.avoidGenre.test(r.genre ?? "")),
+  );
   if (!candidates.length) return null;
 
   const score = (item: CatalogItem) => {
     const name = norm(item.title);
     let s = 0;
     if (name === wanted) s += 100;
-    else if (name.startsWith(wanted) || wanted.startsWith(name)) s += 45;
-    else if (name.includes(wanted)) s += 25;
-    else s -= 40;
-    if (section.type && item.type === section.type) s += 12;
+    else if (name.startsWith(wanted) || wanted.startsWith(name)) s += 55;
+    else if (name.includes(wanted) || wanted.includes(name)) s += 20;
+    else return -1000;
+    // A rail that asks for series must not fall back to a movie / music clip.
+    if (section.type && item.type !== section.type) return -1000;
+    // Long trailing noise ("… (Official Video)") means it is a different work.
+    const extra = name.length - wanted.length;
+    if (extra > 14) s -= Math.min(80, extra * 2);
     s += Number(item.rating ?? 0) * 3;
     const year = Number(item.year ?? 0);
-    if (year >= 2024) s += 12;
-    else if (year >= 2015) s += 5;
+    if (year >= 2024) s += 10;
+    else if (year >= 2015) s += 4;
     return s;
   };
 
-  return [...candidates].sort((a, b) => score(b) - score(a))[0] ?? null;
+  const best = [...candidates]
+    .map((item) => ({ item, s: score(item) }))
+    .sort((a, b) => b.s - a.s)[0];
+  // Reject weak matches so a rail never shows something unrelated.
+  return best && best.s >= 20 ? best.item : null;
 }
 
 /** Fill a rail either from an explicit title list or from merged search feeds. */
@@ -303,6 +332,7 @@ export async function fetchSection(section: HomeSection): Promise<CatalogItem[]>
     !!item.poster &&
     (!section.type || item.type === section.type) &&
     (!section.genre || section.genre.test(item.genre ?? "")) &&
+    !(section.avoidGenre && section.avoidGenre.test(item.genre ?? "")) &&
     (!section.minYear || Number(item.year) >= section.minYear);
 
   const filtered = batches.map((list) => list.filter(keep));
