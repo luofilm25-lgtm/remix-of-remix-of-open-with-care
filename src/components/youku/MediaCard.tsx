@@ -10,6 +10,22 @@ import type { CatalogItem } from "@/lib/moviebox";
  */
 const loadedPosters = new Set<string>();
 
+/**
+ * Warms posters into the browser cache the moment a rail's data arrives, so the
+ * artwork is already decoded before the card scrolls into view.
+ */
+export function preloadPosters(items: { poster?: string | null }[]) {
+  if (typeof window === "undefined") return;
+  for (const it of items) {
+    const src = it.poster;
+    if (!src || loadedPosters.has(src)) continue;
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => loadedPosters.add(src);
+    img.src = src;
+  }
+}
+
 export function MediaCard({
   item,
   block = false,
