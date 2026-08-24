@@ -71,6 +71,7 @@ function WatchPage() {
     queryKey: ["sources", id, season, episode],
     queryFn: () => getSources({ data: { id, season, episode } }),
     staleTime: 60 * 1000,
+    retry: 2,
   });
 
   const related = useQuery({
