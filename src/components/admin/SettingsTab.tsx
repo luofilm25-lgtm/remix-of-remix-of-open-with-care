@@ -94,7 +94,15 @@ export function SettingsTab() {
                       placeholder="Days"
                     />
                     <input
-                      className={`${softField} sm:col-span-3`}
+                      className={softField}
+                      inputMode="numeric"
+                      title="Devices allowed at the same time"
+                      value={String(Number(p.devices ?? 1) || 1)}
+                      onChange={(e) => editPlan(tier, i, { devices: Number(e.target.value) || 1 })}
+                      placeholder="Devices"
+                    />
+                    <input
+                      className={`${softField} sm:col-span-4`}
                       value={p.note}
                       onChange={(e) => editPlan(tier, i, { note: e.target.value })}
                       placeholder="Short description"
