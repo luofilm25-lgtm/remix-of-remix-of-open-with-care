@@ -263,24 +263,37 @@ const norm = (s: string) =>
     .trim();
 
 /** Look up one real title and return the closest catalog match. */
-async function lookupTitle(title: string): Promise<CatalogItem | null> {
+async function lookupTitle(title: string, section: HomeSection): Promise<CatalogItem | null> {
   const results = await searchCatalog(title, 1).catch(() => [] as CatalogItem[]);
   const wanted = norm(title);
-  const withPoster = results.filter((r) => !!r.poster);
-  return (
-    withPoster.find((r) => norm(r.title) === wanted) ??
-    withPoster.find((r) => norm(r.title).startsWith(wanted) || wanted.startsWith(norm(r.title))) ??
-    withPoster[0] ??
-    null
-  );
+  const candidates = results.filter((r) => !!r.poster);
+  if (!candidates.length) return null;
+
+  const score = (item: CatalogItem) => {
+    const name = norm(item.title);
+    let s = 0;
+    if (name === wanted) s += 100;
+    else if (name.startsWith(wanted) || wanted.startsWith(name)) s += 45;
+    else if (name.includes(wanted)) s += 25;
+    else s -= 40;
+    if (section.type && item.type === section.type) s += 12;
+    s += Number(item.rating ?? 0) * 3;
+    const year = Number(item.year ?? 0);
+    if (year >= 2024) s += 12;
+    else if (year >= 2015) s += 5;
+    return s;
+  };
+
+  return [...candidates].sort((a, b) => score(b) - score(a))[0] ?? null;
 }
 
 /** Fill a rail either from an explicit title list or from merged search feeds. */
 export async function fetchSection(section: HomeSection): Promise<CatalogItem[]> {
   if (section.titles?.length) {
-    const found = await Promise.all(section.titles.map(lookupTitle));
+    const found = await Promise.all(section.titles.map((t) => lookupTitle(t, section)));
     return dedupe(found.filter((i): i is CatalogItem => !!i));
   }
+
 
   const batches = await Promise.all(
     (section.keywords ?? []).map((q) => searchCatalog(q, 1).catch(() => [] as CatalogItem[])),
