@@ -51,10 +51,11 @@ function MediaInput({
   const [pct, setPct] = useState<number | null>(null);
 
   return (
-    <div className="rounded-2xl bg-white/55 p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-[12px] font-semibold opacity-70">{label}</span>
-        <div className="flex gap-1 rounded-full bg-white/70 p-1">
+    <div className="min-w-0 overflow-hidden rounded-2xl bg-white/55 p-3">
+      <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <span className="truncate text-[12px] font-semibold opacity-70">{label}</span>
+        <div className="flex shrink-0 gap-1 rounded-full bg-white/70 p-1">
+
           {(["url", "file"] as const).map((m) => (
             <button
               key={m}
@@ -271,7 +272,7 @@ export function ContentTab({ userId }: { userId?: string }) {
       )}
 
       <Dialog open={!!form} onOpenChange={(v) => !v && setForm(null)}>
-        <DialogContent className="max-h-[88vh] max-w-[640px] overflow-y-auto border-0 bg-[linear-gradient(165deg,oklch(0.98_0.02_20),oklch(0.97_0.03_320)_55%,oklch(0.98_0.03_80))] p-6 text-[oklch(0.28_0.03_320)]">
+        <DialogContent className="max-h-[88vh] w-[calc(100vw-1.5rem)] max-w-[640px] overflow-y-auto overflow-x-hidden border-0 bg-[linear-gradient(165deg,oklch(0.98_0.02_20),oklch(0.97_0.03_320)_55%,oklch(0.98_0.03_80))] p-4 text-[oklch(0.28_0.03_320)] sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-[18px] font-bold">
               {form?.id ? "Update" : form?.kind === "series" ? "Add series" : "Upload movie"}

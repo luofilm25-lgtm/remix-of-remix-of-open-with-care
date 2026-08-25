@@ -100,6 +100,15 @@ export async function startMobileMoney(tx: Row, phone: string) {
 }
 
 async function activateSubscription(tx: Row) {
+  // One transaction may only ever grant one subscription, no matter how many
+  // pollers (this tab, the provider hook, the /pay page) confirm it at once.
+  const { data: existing } = await fdb
+    .from("luo_subscriptions")
+    .select("*")
+    .eq("transaction_id", String(tx.id))
+    .maybeSingle();
+  if (existing) return;
+
   const { data: latest } = await fdb
     .from("luo_subscriptions")
     .select("*")
@@ -118,6 +127,7 @@ async function activateSubscription(tx: Row) {
   await fdb.from("luo_subscriptions").insert({
     id: uuid(),
     user_id: tx.user_id,
+    transaction_id: String(tx.id),
     plan_id: tx.plan_id,
     plan_name: tx.plan_name,
     tier: tx.tier ?? "vip",
@@ -142,10 +152,22 @@ async function activateSubscription(tx: Row) {
   });
 }
 
+
 export type SyncResult = { status: "pending" | "completed" | "failed" | "expired"; message: string };
 
+/** In-flight syncs per transaction, so overlapping pollers share one result. */
+const inFlight = new Map<string, Promise<SyncResult>>();
+
 /** The heart of the flow: reads the live status and activates on success. */
-export async function syncTransaction(txId: string): Promise<SyncResult> {
+export function syncTransaction(txId: string): Promise<SyncResult> {
+  const running = inFlight.get(txId);
+  if (running) return running;
+  const job = runSync(txId).finally(() => inFlight.delete(txId));
+  inFlight.set(txId, job);
+  return job;
+}
+
+async function runSync(txId: string): Promise<SyncResult> {
   const tx = await getTx(txId);
   if (!tx) return { status: "failed", message: "Payment not found" };
 
@@ -164,6 +186,8 @@ export async function syncTransaction(txId: string): Promise<SyncResult> {
   try {
     const result = readStatus(await relworx.requestStatus(String(tx.internal_reference)));
     if (result.status === "success") {
+      // Claim the transaction first, then re-read it: if another tab already
+      // completed it, we skip activation instead of granting a second plan.
       await fdb
         .from("luo_transactions")
         .update({ status: "completed", completed_at: nowIso() })
@@ -182,6 +206,7 @@ export async function syncTransaction(txId: string): Promise<SyncResult> {
     return { status: "pending", message: "Waiting for confirmation" };
   }
 }
+
 
 export async function expireStaleSubscriptions(userId: string) {
   const { data } = await fdb.from("luo_subscriptions").select("*").eq("user_id", userId);

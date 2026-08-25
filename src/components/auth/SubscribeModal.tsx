@@ -152,25 +152,26 @@ export function SubscribeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-[340px] overflow-hidden rounded-[24px] sm:max-w-[760px] sm:rounded-lg border-0 bg-[linear-gradient(160deg,oklch(0.98_0.02_20),oklch(0.97_0.03_320)_45%,oklch(0.98_0.03_80))] p-0 text-[oklch(0.28_0.03_320)] shadow-2xl">
+      <DialogContent className="max-h-[88vh] w-[calc(100vw-1.25rem)] max-w-[350px] overflow-hidden rounded-[22px] border-0 bg-[linear-gradient(160deg,oklch(0.98_0.02_20),oklch(0.97_0.03_320)_45%,oklch(0.98_0.03_80))] p-0 text-[oklch(0.28_0.03_320)] shadow-2xl sm:max-w-[760px] sm:rounded-lg">
         <DialogHeader className="sr-only">
           <DialogTitle>Choose your membership</DialogTitle>
         </DialogHeader>
 
-        <div className="flex items-center gap-3 bg-[linear-gradient(100deg,oklch(0.95_0.05_10),oklch(0.95_0.05_320))] px-5 py-4">
-          <div className="grid size-10 place-items-center rounded-full bg-white/70 text-[oklch(0.6_0.16_20)] shadow-inner">
-            <Crown className="size-5" />
+        <div className="flex items-center gap-2.5 bg-[linear-gradient(100deg,oklch(0.95_0.05_10),oklch(0.95_0.05_320))] px-4 py-2.5 sm:gap-3 sm:px-5 sm:py-4">
+          <div className="grid size-8 shrink-0 place-items-center rounded-full bg-white/70 text-[oklch(0.6_0.16_20)] shadow-inner sm:size-10">
+            <Crown className="size-4 sm:size-5" />
           </div>
           <div className="min-w-0">
-            <p className="text-[15px] font-bold">Membership</p>
-            <p className="truncate text-[12px] opacity-70">
-              Unlock every movie, series and episode without limits.
+            <p className="text-[14px] font-bold sm:text-[15px]">Membership</p>
+            <p className="truncate text-[11px] opacity-70 sm:text-[12px]">
+              Unlock every movie, series and episode.
             </p>
           </div>
         </div>
 
-        <div className="grid max-h-[calc(92vh-72px)] gap-0 overflow-y-auto md:grid-cols-[1fr_260px]">
-          <div className="p-3.5 sm:p-5">
+        <div className="grid min-w-0 gap-0 overflow-hidden md:max-h-[calc(88vh-72px)] md:grid-cols-[1fr_260px] md:overflow-y-auto">
+          <div className="min-w-0 p-3 sm:p-5">
+
             <div className="grid grid-cols-2 overflow-hidden rounded-2xl bg-white/60 p-1 shadow-sm">
               {(Object.keys(TIERS) as Array<"vip" | "svip">).map((k) => {
                 const T = TIERS[k];
@@ -212,35 +213,36 @@ export function SubscribeModal({
                       setSelected(p.id);
                       setPhase("idle");
                     }}
-                    className={`relative rounded-2xl px-1.5 pb-3 pt-6 text-center transition sm:px-3 sm:pb-4 ${
+                    className={`relative min-w-0 rounded-xl px-1 pb-2 pt-5 text-center transition sm:rounded-2xl sm:px-3 sm:pb-4 sm:pt-6 ${
                       on
                         ? "bg-[linear-gradient(170deg,oklch(0.97_0.05_60),oklch(0.93_0.08_35))] ring-2 ring-[oklch(0.8_0.13_50)]"
                         : "bg-white/70 ring-1 ring-black/5 hover:bg-white"
                     }`}
                   >
                     {TAGS[p.id] && (
-                      <span className="absolute left-0 top-0 rounded-br-2xl rounded-tl-2xl bg-[linear-gradient(100deg,oklch(0.72_0.19_25),oklch(0.75_0.17_40))] px-2 py-1 text-[10px] font-bold text-white">
+                      <span className="absolute left-0 top-0 rounded-br-xl rounded-tl-xl bg-[linear-gradient(100deg,oklch(0.72_0.19_25),oklch(0.75_0.17_40))] px-1.5 py-0.5 text-[9px] font-bold text-white sm:rounded-br-2xl sm:rounded-tl-2xl sm:px-2 sm:py-1 sm:text-[10px]">
                         {TAGS[p.id]}
                       </span>
                     )}
-                    <p className="text-[11px] font-semibold leading-tight sm:text-[13px]">{p.name}</p>
-                    <p className="mt-2 text-[15px] font-black leading-none sm:text-[22px]">
-                      <span className="text-[10px] font-bold sm:text-[13px]">UGX </span>
+                    <p className="truncate text-[10px] font-semibold leading-tight sm:text-[13px]">{p.name}</p>
+                    <p className="mt-1 text-[13px] font-black leading-none sm:mt-2 sm:text-[22px]">
+                      <span className="text-[9px] font-bold sm:text-[13px]">UGX </span>
                       {Math.round(p.price).toLocaleString()}
                     </p>
-                    <p className="mt-1 text-[11px] opacity-70">
+                    <p className="mt-0.5 text-[10px] opacity-70 sm:mt-1 sm:text-[11px]">
                       {p.days === 1 ? "24 hours" : `${p.days} days`}
                     </p>
-                    <p className="mt-1.5 text-[10px] leading-snug opacity-60 sm:mt-2 sm:text-[11px]">{p.note}</p>
-                    <p className="mt-1 text-[10px] font-semibold opacity-70">
+                    <p className="mt-1 hidden text-[11px] leading-snug opacity-60 sm:mt-2 sm:block">{p.note}</p>
+                    <p className="mt-0.5 text-[9px] font-semibold opacity-70 sm:mt-1 sm:text-[10px]">
                       {Number(p.devices ?? 1)} {Number(p.devices ?? 1) === 1 ? "device" : "devices"}
                     </p>
+
                   </button>
                 );
               })}
             </div>
 
-            <div className="mt-4 rounded-2xl bg-[linear-gradient(120deg,oklch(0.88_0.07_75),oklch(0.82_0.1_65))] p-4 shadow-[0_14px_30px_-18px_rgba(0,0,0,0.6)]">
+            <div className="mt-3 hidden rounded-2xl bg-[linear-gradient(120deg,oklch(0.88_0.07_75),oklch(0.82_0.1_65))] p-4 shadow-[0_14px_30px_-18px_rgba(0,0,0,0.6)] sm:mt-4 sm:block">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[11px] opacity-70">Selected Plan</p>
@@ -263,46 +265,47 @@ export function SubscribeModal({
             </div>
           </div>
 
-          <aside className="flex flex-col justify-between border-black/5 bg-white/50 p-3.5 md:border-l sm:p-5">
-            <div>
-              <p className="text-[12px] opacity-70">Payment</p>
-              <p className="text-[22px] font-black leading-none sm:text-[30px]">{formatMoney(plan.price)}</p>
+          <aside className="flex min-w-0 flex-col justify-between border-black/5 bg-white/50 px-3 pb-3 pt-1 sm:p-5 md:border-l">
+            <div className="min-w-0">
+              <p className="text-[11px] opacity-70 sm:text-[12px]">Payment</p>
+              <p className="text-[20px] font-black leading-none sm:text-[30px]">{formatMoney(plan.price)}</p>
 
               {phase === "idle" && qr && (
-                <div className="mt-4 rounded-2xl bg-white/80 p-3 text-center ring-1 ring-black/5">
-                  <img src={qr} alt="Scan to pay on your phone" className="mx-auto size-[120px] sm:size-[150px]" />
+                <div className="mt-4 hidden rounded-2xl bg-white/80 p-3 text-center ring-1 ring-black/5 md:block">
+                  <img src={qr} alt="Scan to pay on your phone" className="mx-auto size-[150px]" />
                   <p className="mt-2 text-[10px] opacity-60">Scan to pay from another device</p>
                 </div>
               )}
 
+
               {phase === "phone" && (
-                <div className="mt-4">
+                <div className="mt-2 sm:mt-4">
                   <label className="text-[11px] font-semibold opacity-70">Mobile money number</label>
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     inputMode="tel"
                     placeholder="0770 123 456"
-                    className="mt-1 h-11 w-full rounded-2xl bg-white px-4 text-sm outline-none ring-1 ring-black/10 focus:ring-2 focus:ring-[oklch(0.82_0.1_65)]"
+                    className="mt-1 h-10 w-full rounded-2xl bg-white px-4 text-sm outline-none ring-1 ring-black/10 focus:ring-2 focus:ring-[oklch(0.82_0.1_65)] sm:h-11"
                   />
                 </div>
               )}
 
               {(phase === "waiting" || phase === "done" || phase === "failed") && (
-                <p className="mt-4 flex items-start gap-2 text-[12px] leading-relaxed opacity-75">
+                <p className="mt-2 flex items-start gap-2 text-[11.5px] leading-relaxed opacity-75 sm:mt-4 sm:text-[12px]">
                   {phase === "waiting" && <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin" />}
                   {status}
                 </p>
               )}
 
               {phase === "idle" && (
-                <p className="mt-4 text-[11px] leading-relaxed opacity-65">
+                <p className="mt-2 text-[10.5px] leading-snug opacity-65 sm:mt-4 sm:text-[11px]">
                   Pay with MTN MoMo or Airtel Money. Your membership starts the moment payment is confirmed.
                 </p>
               )}
             </div>
 
-            <div className="mt-6">
+            <div className="mt-3 sm:mt-6">
               <button
                 type="button"
                 disabled={phase === "waiting" || phase === "done"}
@@ -310,7 +313,7 @@ export function SubscribeModal({
                   if (phase === "idle" || phase === "failed") setPhase("phone");
                   else if (phase === "phone") void pay();
                 }}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(100deg,oklch(0.97_0.05_95),oklch(0.88_0.11_82))] text-[15px] font-bold text-[oklch(0.3_0.06_60)] shadow-[0_12px_28px_-14px_oklch(0.8_0.12_75)] transition hover:brightness-105 disabled:opacity-60"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(100deg,oklch(0.97_0.05_95),oklch(0.88_0.11_82))] text-[14px] font-bold text-[oklch(0.3_0.06_60)] shadow-[0_12px_28px_-14px_oklch(0.8_0.12_75)] transition hover:brightness-105 disabled:opacity-60 sm:h-12 sm:text-[15px]"
               >
                 {phase === "phone" && <Smartphone className="size-4" />}
                 {phase === "waiting"
@@ -323,10 +326,11 @@ export function SubscribeModal({
                         ? "Try again"
                         : "Continue to Pay"}
               </button>
-              <p className="mt-3 text-center text-[10px] opacity-55">
+              <p className="mt-2 text-center text-[9.5px] opacity-55 sm:mt-3 sm:text-[10px]">
                 By continuing you agree to the Membership Agreement.
               </p>
             </div>
+
           </aside>
         </div>
       </DialogContent>

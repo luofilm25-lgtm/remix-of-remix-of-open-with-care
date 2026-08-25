@@ -6,7 +6,8 @@ export const SOFT_BG =
   "bg-[linear-gradient(160deg,oklch(0.98_0.02_20),oklch(0.97_0.03_320)_45%,oklch(0.98_0.03_80))] text-[oklch(0.28_0.03_320)]";
 
 export const softField =
-  "h-11 w-full rounded-2xl bg-white/70 px-4 text-sm text-[oklch(0.28_0.03_320)] outline-none ring-1 ring-black/5 transition placeholder:opacity-50 focus:bg-white focus:ring-2 focus:ring-[oklch(0.82_0.1_65)]";
+  "h-11 w-full min-w-0 rounded-2xl bg-white/70 px-4 text-sm text-[oklch(0.28_0.03_320)] outline-none ring-1 ring-black/5 transition placeholder:opacity-50 focus:bg-white focus:ring-2 focus:ring-[oklch(0.82_0.1_65)]";
+
 
 export const goldBtn =
   "h-11 rounded-full bg-[linear-gradient(100deg,oklch(0.97_0.05_95),oklch(0.88_0.11_82))] px-5 text-sm font-bold text-[oklch(0.3_0.06_60)] shadow-[0_12px_28px_-14px_oklch(0.8_0.12_75)] transition hover:brightness-105 disabled:opacity-50";
