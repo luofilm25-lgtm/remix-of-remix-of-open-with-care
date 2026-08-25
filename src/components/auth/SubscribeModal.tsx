@@ -279,33 +279,33 @@ export function SubscribeModal({
 
 
               {phase === "phone" && (
-                <div className="mt-4">
+                <div className="mt-2 sm:mt-4">
                   <label className="text-[11px] font-semibold opacity-70">Mobile money number</label>
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     inputMode="tel"
                     placeholder="0770 123 456"
-                    className="mt-1 h-11 w-full rounded-2xl bg-white px-4 text-sm outline-none ring-1 ring-black/10 focus:ring-2 focus:ring-[oklch(0.82_0.1_65)]"
+                    className="mt-1 h-10 w-full rounded-2xl bg-white px-4 text-sm outline-none ring-1 ring-black/10 focus:ring-2 focus:ring-[oklch(0.82_0.1_65)] sm:h-11"
                   />
                 </div>
               )}
 
               {(phase === "waiting" || phase === "done" || phase === "failed") && (
-                <p className="mt-4 flex items-start gap-2 text-[12px] leading-relaxed opacity-75">
+                <p className="mt-2 flex items-start gap-2 text-[11.5px] leading-relaxed opacity-75 sm:mt-4 sm:text-[12px]">
                   {phase === "waiting" && <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin" />}
                   {status}
                 </p>
               )}
 
               {phase === "idle" && (
-                <p className="mt-4 text-[11px] leading-relaxed opacity-65">
+                <p className="mt-2 text-[10.5px] leading-snug opacity-65 sm:mt-4 sm:text-[11px]">
                   Pay with MTN MoMo or Airtel Money. Your membership starts the moment payment is confirmed.
                 </p>
               )}
             </div>
 
-            <div className="mt-6">
+            <div className="mt-3 sm:mt-6">
               <button
                 type="button"
                 disabled={phase === "waiting" || phase === "done"}
@@ -313,7 +313,7 @@ export function SubscribeModal({
                   if (phase === "idle" || phase === "failed") setPhase("phone");
                   else if (phase === "phone") void pay();
                 }}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(100deg,oklch(0.97_0.05_95),oklch(0.88_0.11_82))] text-[15px] font-bold text-[oklch(0.3_0.06_60)] shadow-[0_12px_28px_-14px_oklch(0.8_0.12_75)] transition hover:brightness-105 disabled:opacity-60"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(100deg,oklch(0.97_0.05_95),oklch(0.88_0.11_82))] text-[14px] font-bold text-[oklch(0.3_0.06_60)] shadow-[0_12px_28px_-14px_oklch(0.8_0.12_75)] transition hover:brightness-105 disabled:opacity-60 sm:h-12 sm:text-[15px]"
               >
                 {phase === "phone" && <Smartphone className="size-4" />}
                 {phase === "waiting"
@@ -326,10 +326,11 @@ export function SubscribeModal({
                         ? "Try again"
                         : "Continue to Pay"}
               </button>
-              <p className="mt-3 text-center text-[10px] opacity-55">
+              <p className="mt-2 text-center text-[9.5px] opacity-55 sm:mt-3 sm:text-[10px]">
                 By continuing you agree to the Membership Agreement.
               </p>
             </div>
+
           </aside>
         </div>
       </DialogContent>
