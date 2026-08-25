@@ -152,25 +152,26 @@ export function SubscribeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-[340px] overflow-hidden rounded-[24px] sm:max-w-[760px] sm:rounded-lg border-0 bg-[linear-gradient(160deg,oklch(0.98_0.02_20),oklch(0.97_0.03_320)_45%,oklch(0.98_0.03_80))] p-0 text-[oklch(0.28_0.03_320)] shadow-2xl">
+      <DialogContent className="max-h-[88vh] w-[calc(100vw-1.25rem)] max-w-[350px] overflow-hidden rounded-[22px] border-0 bg-[linear-gradient(160deg,oklch(0.98_0.02_20),oklch(0.97_0.03_320)_45%,oklch(0.98_0.03_80))] p-0 text-[oklch(0.28_0.03_320)] shadow-2xl sm:max-w-[760px] sm:rounded-lg">
         <DialogHeader className="sr-only">
           <DialogTitle>Choose your membership</DialogTitle>
         </DialogHeader>
 
-        <div className="flex items-center gap-3 bg-[linear-gradient(100deg,oklch(0.95_0.05_10),oklch(0.95_0.05_320))] px-5 py-4">
-          <div className="grid size-10 place-items-center rounded-full bg-white/70 text-[oklch(0.6_0.16_20)] shadow-inner">
-            <Crown className="size-5" />
+        <div className="flex items-center gap-2.5 bg-[linear-gradient(100deg,oklch(0.95_0.05_10),oklch(0.95_0.05_320))] px-4 py-2.5 sm:gap-3 sm:px-5 sm:py-4">
+          <div className="grid size-8 shrink-0 place-items-center rounded-full bg-white/70 text-[oklch(0.6_0.16_20)] shadow-inner sm:size-10">
+            <Crown className="size-4 sm:size-5" />
           </div>
           <div className="min-w-0">
-            <p className="text-[15px] font-bold">Membership</p>
-            <p className="truncate text-[12px] opacity-70">
-              Unlock every movie, series and episode without limits.
+            <p className="text-[14px] font-bold sm:text-[15px]">Membership</p>
+            <p className="truncate text-[11px] opacity-70 sm:text-[12px]">
+              Unlock every movie, series and episode.
             </p>
           </div>
         </div>
 
-        <div className="grid max-h-[calc(92vh-72px)] gap-0 overflow-y-auto md:grid-cols-[1fr_260px]">
-          <div className="p-3.5 sm:p-5">
+        <div className="grid min-w-0 gap-0 overflow-hidden md:max-h-[calc(88vh-72px)] md:grid-cols-[1fr_260px] md:overflow-y-auto">
+          <div className="min-w-0 p-3 sm:p-5">
+
             <div className="grid grid-cols-2 overflow-hidden rounded-2xl bg-white/60 p-1 shadow-sm">
               {(Object.keys(TIERS) as Array<"vip" | "svip">).map((k) => {
                 const T = TIERS[k];
