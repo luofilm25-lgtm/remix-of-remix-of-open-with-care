@@ -100,6 +100,15 @@ export async function startMobileMoney(tx: Row, phone: string) {
 }
 
 async function activateSubscription(tx: Row) {
+  // One transaction may only ever grant one subscription, no matter how many
+  // pollers (this tab, the provider hook, the /pay page) confirm it at once.
+  const { data: existing } = await fdb
+    .from("luo_subscriptions")
+    .select("*")
+    .eq("transaction_id", String(tx.id))
+    .maybeSingle();
+  if (existing) return;
+
   const { data: latest } = await fdb
     .from("luo_subscriptions")
     .select("*")
@@ -118,6 +127,7 @@ async function activateSubscription(tx: Row) {
   await fdb.from("luo_subscriptions").insert({
     id: uuid(),
     user_id: tx.user_id,
+    transaction_id: String(tx.id),
     plan_id: tx.plan_id,
     plan_name: tx.plan_name,
     tier: tx.tier ?? "vip",
@@ -141,6 +151,7 @@ async function activateSubscription(tx: Row) {
     created_at: nowIso(),
   });
 }
+
 
 export type SyncResult = { status: "pending" | "completed" | "failed" | "expired"; message: string };
 
