@@ -242,7 +242,7 @@ export function SubscribeModal({
               })}
             </div>
 
-            <div className="mt-4 rounded-2xl bg-[linear-gradient(120deg,oklch(0.88_0.07_75),oklch(0.82_0.1_65))] p-4 shadow-[0_14px_30px_-18px_rgba(0,0,0,0.6)]">
+            <div className="mt-3 hidden rounded-2xl bg-[linear-gradient(120deg,oklch(0.88_0.07_75),oklch(0.82_0.1_65))] p-4 shadow-[0_14px_30px_-18px_rgba(0,0,0,0.6)] sm:mt-4 sm:block">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[11px] opacity-70">Selected Plan</p>
@@ -265,17 +265,18 @@ export function SubscribeModal({
             </div>
           </div>
 
-          <aside className="flex flex-col justify-between border-black/5 bg-white/50 p-3.5 md:border-l sm:p-5">
-            <div>
-              <p className="text-[12px] opacity-70">Payment</p>
-              <p className="text-[22px] font-black leading-none sm:text-[30px]">{formatMoney(plan.price)}</p>
+          <aside className="flex min-w-0 flex-col justify-between border-black/5 bg-white/50 px-3 pb-3 pt-1 sm:p-5 md:border-l">
+            <div className="min-w-0">
+              <p className="text-[11px] opacity-70 sm:text-[12px]">Payment</p>
+              <p className="text-[20px] font-black leading-none sm:text-[30px]">{formatMoney(plan.price)}</p>
 
               {phase === "idle" && qr && (
-                <div className="mt-4 rounded-2xl bg-white/80 p-3 text-center ring-1 ring-black/5">
-                  <img src={qr} alt="Scan to pay on your phone" className="mx-auto size-[120px] sm:size-[150px]" />
+                <div className="mt-4 hidden rounded-2xl bg-white/80 p-3 text-center ring-1 ring-black/5 md:block">
+                  <img src={qr} alt="Scan to pay on your phone" className="mx-auto size-[150px]" />
                   <p className="mt-2 text-[10px] opacity-60">Scan to pay from another device</p>
                 </div>
               )}
+
 
               {phase === "phone" && (
                 <div className="mt-4">
