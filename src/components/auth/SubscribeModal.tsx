@@ -213,29 +213,30 @@ export function SubscribeModal({
                       setSelected(p.id);
                       setPhase("idle");
                     }}
-                    className={`relative rounded-2xl px-1.5 pb-3 pt-6 text-center transition sm:px-3 sm:pb-4 ${
+                    className={`relative min-w-0 rounded-xl px-1 pb-2 pt-5 text-center transition sm:rounded-2xl sm:px-3 sm:pb-4 sm:pt-6 ${
                       on
                         ? "bg-[linear-gradient(170deg,oklch(0.97_0.05_60),oklch(0.93_0.08_35))] ring-2 ring-[oklch(0.8_0.13_50)]"
                         : "bg-white/70 ring-1 ring-black/5 hover:bg-white"
                     }`}
                   >
                     {TAGS[p.id] && (
-                      <span className="absolute left-0 top-0 rounded-br-2xl rounded-tl-2xl bg-[linear-gradient(100deg,oklch(0.72_0.19_25),oklch(0.75_0.17_40))] px-2 py-1 text-[10px] font-bold text-white">
+                      <span className="absolute left-0 top-0 rounded-br-xl rounded-tl-xl bg-[linear-gradient(100deg,oklch(0.72_0.19_25),oklch(0.75_0.17_40))] px-1.5 py-0.5 text-[9px] font-bold text-white sm:rounded-br-2xl sm:rounded-tl-2xl sm:px-2 sm:py-1 sm:text-[10px]">
                         {TAGS[p.id]}
                       </span>
                     )}
-                    <p className="text-[11px] font-semibold leading-tight sm:text-[13px]">{p.name}</p>
-                    <p className="mt-2 text-[15px] font-black leading-none sm:text-[22px]">
-                      <span className="text-[10px] font-bold sm:text-[13px]">UGX </span>
+                    <p className="truncate text-[10px] font-semibold leading-tight sm:text-[13px]">{p.name}</p>
+                    <p className="mt-1 text-[13px] font-black leading-none sm:mt-2 sm:text-[22px]">
+                      <span className="text-[9px] font-bold sm:text-[13px]">UGX </span>
                       {Math.round(p.price).toLocaleString()}
                     </p>
-                    <p className="mt-1 text-[11px] opacity-70">
+                    <p className="mt-0.5 text-[10px] opacity-70 sm:mt-1 sm:text-[11px]">
                       {p.days === 1 ? "24 hours" : `${p.days} days`}
                     </p>
-                    <p className="mt-1.5 text-[10px] leading-snug opacity-60 sm:mt-2 sm:text-[11px]">{p.note}</p>
-                    <p className="mt-1 text-[10px] font-semibold opacity-70">
+                    <p className="mt-1 hidden text-[11px] leading-snug opacity-60 sm:mt-2 sm:block">{p.note}</p>
+                    <p className="mt-0.5 text-[9px] font-semibold opacity-70 sm:mt-1 sm:text-[10px]">
                       {Number(p.devices ?? 1)} {Number(p.devices ?? 1) === 1 ? "device" : "devices"}
                     </p>
+
                   </button>
                 );
               })}
