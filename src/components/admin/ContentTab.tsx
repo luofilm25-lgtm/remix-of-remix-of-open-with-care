@@ -51,10 +51,11 @@ function MediaInput({
   const [pct, setPct] = useState<number | null>(null);
 
   return (
-    <div className="rounded-2xl bg-white/55 p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-[12px] font-semibold opacity-70">{label}</span>
-        <div className="flex gap-1 rounded-full bg-white/70 p-1">
+    <div className="min-w-0 overflow-hidden rounded-2xl bg-white/55 p-3">
+      <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <span className="truncate text-[12px] font-semibold opacity-70">{label}</span>
+        <div className="flex shrink-0 gap-1 rounded-full bg-white/70 p-1">
+
           {(["url", "file"] as const).map((m) => (
             <button
               key={m}
