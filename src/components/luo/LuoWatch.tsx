@@ -11,6 +11,7 @@ import { SubscribeGate } from "@/components/youku/SubscribeGate";
 import { useSubscription } from "@/hooks/useSubscription";
 import { TitleActions } from "@/components/youku/TitleActions";
 import { MediaCard } from "@/components/youku/MediaCard";
+import { WatchSkeleton } from "@/components/youku/Skeletons";
 
 export function LuoWatch({ id, language }: { id: string; language: LuoLanguage }) {
   const title = useQuery({ queryKey: ["luo-title", id], queryFn: () => getLuoTitle(id) });
@@ -95,7 +96,9 @@ export function LuoWatch({ id, language }: { id: string; language: LuoLanguage }
           </Link>
 
           {title.isLoading ? (
-            <div className="mt-4 aspect-video animate-pulse rounded-[1.25rem] bg-muted" />
+            <div className="mt-4">
+              <WatchSkeleton />
+            </div>
           ) : !data ? (
             <p className="mt-10 text-sm text-muted-foreground">This title is not available.</p>
           ) : (

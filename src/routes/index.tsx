@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useQueries, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQueries, useQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
 import { Sidebar } from "@/components/youku/Sidebar";
 import { TopBar } from "@/components/youku/TopBar";
 import { MobileNav } from "@/components/youku/MobileNav";
 import { Rail } from "@/components/youku/Rail";
+import { RowSkeleton } from "@/components/youku/Skeletons";
 import { VjRail } from "@/components/youku/VjRail";
 import { isAdultItem } from "@/lib/categories";
 import { getHome } from "@/lib/catalog.functions";
@@ -38,19 +39,20 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  // Never let a flaky upstream turn SSR into a 500 — the shell renders either way.
-  loader: ({ context }) => context.queryClient.ensureQueryData(homeQuery).catch(() => undefined),
+  // No blocking loader: the shell + skeletons render instantly and the catalog
+  // fills in from the browser — this keeps first paint fast on every host.
   component: HomePage,
 });
 
 function HomePage() {
-  const { data, refetch } = useSuspenseQuery(homeQuery);
-  const slides = data.hero;
+  const { data, refetch } = useQuery(homeQuery);
+  const slides = data?.hero ?? [];
   const [index, setIndex] = useState(0);
 
-  // If the server render came back empty (upstream unreachable from the host),
-  // retry straight from the browser so the page still fills in.
-  const degraded = (data as { degraded?: boolean }).degraded === true || slides.length === 0;
+  // If a response came back empty (upstream unreachable), retry so the page
+  // still fills in.
+  const degraded =
+    !!data && ((data as { degraded?: boolean }).degraded === true || slides.length === 0);
   useEffect(() => {
     if (!degraded) return;
     const t = setTimeout(() => void refetch(), 300);
@@ -87,13 +89,13 @@ function HomePage() {
   })).filter((s) => s.items.length >= 4);
 
   // Real trending straight from the catalog's own trending rail.
-  const upstreamTrending = clean(data.trending ?? []);
+  const upstreamTrending = clean(data?.trending ?? []);
   const rankedSection = sections.find((s) => s.ranked);
   const trending = upstreamTrending.length >= 4 ? upstreamTrending : (rankedSection?.items ?? []);
-  const comingSoon = clean(data.comingSoon ?? []);
+  const comingSoon = clean(data?.comingSoon ?? []);
   const rails = sections.filter((s) => !s.ranked || s.items !== trending);
   // Any extra upstream rows we don't already cover.
-  const extraRows = data.rows
+  const extraRows = (data?.rows ?? [])
     .slice(1)
     .filter(
       (r) =>
@@ -109,7 +111,15 @@ function HomePage() {
         <div className="relative">
           <TopBar />
 
-          {!slide && (
+          {!data && (
+            <div className="relative h-[300px] w-full animate-pulse bg-muted/40 sm:h-[400px] lg:h-[460px]">
+              <div className="absolute inset-x-0 bottom-12 z-20 pl-3 sm:pl-4 lg:bottom-16 lg:pl-8">
+                <VjRail />
+              </div>
+            </div>
+          )}
+
+          {!!data && !slide && (
             <div className="pl-3 pt-16 sm:pl-4 lg:pl-8">
               <VjRail />
             </div>
@@ -185,6 +195,13 @@ function HomePage() {
         </div>
 
         <main className="pb-28 pl-3 sm:pl-4 lg:pb-16 lg:pl-8">
+          {!data && (
+            <>
+              <RowSkeleton />
+              <RowSkeleton />
+              <RowSkeleton />
+            </>
+          )}
           {rails.map((row) => (
             <div key={row.title}>
               <Rail title={row.title} items={row.items} {...(row.ranked ? { ranked: true } : {})} />
