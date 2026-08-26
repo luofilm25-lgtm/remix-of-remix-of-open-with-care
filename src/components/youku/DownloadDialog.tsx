@@ -98,7 +98,9 @@ export function DownloadDialog({ open, onClose, sources, baseName }: Props) {
                   <span className="text-sm font-bold text-foreground">
                     {source.resolution ? `${source.resolution}P` : "AUTO"}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">{source.size ?? "—"}</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {source.size ?? probedSizes[source.id] ?? "…"}
+                  </span>
                 </a>
               ))}
             </div>
