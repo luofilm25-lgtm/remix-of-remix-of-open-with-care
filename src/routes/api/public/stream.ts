@@ -1,6 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const ALLOWED_HOSTS = [".hakunaymatata.com", ".aoneroom.com", ".inmoviebox.com", ".valiw.hakunaymatata.com"];
+// Catalog CDN hosts plus the storage providers used for admin-uploaded
+// (Luo/Luganda) media, so streaming, downloads and size probes all work.
+const ALLOWED_HOSTS = [
+  ".hakunaymatata.com",
+  ".aoneroom.com",
+  ".inmoviebox.com",
+  ".r2.dev",
+  ".r2.cloudflarestorage.com",
+  ".workers.dev",
+  ".up.railway.app",
+  ".supabase.co",
+  ".supabase.in",
+  "storage.googleapis.com",
+  "firebasestorage.googleapis.com",
+  ".firebasestorage.app",
+  ".googleapis.com",
+  ".googlevideo.com",
+  ".luofilm.site",
+];
 
 export const Route = createFileRoute("/api/public/stream")({
   server: {
