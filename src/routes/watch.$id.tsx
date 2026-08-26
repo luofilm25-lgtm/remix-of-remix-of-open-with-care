@@ -64,38 +64,54 @@ export const Route = createFileRoute("/watch/$id")({
 
 function WatchPage() {
   const { id } = Route.useParams();
-  const { data: title, refetch: refetchTitle } = useSuspenseQuery(titleQuery(id));
+  const { data: title, refetch: refetchTitle } = useQuery(titleQuery(id));
 
   // Placeholder returned when the host couldn't reach the catalog — retry client-side.
-  const unavailable = (title as { unavailable?: boolean }).unavailable === true;
+  const unavailable = !!title && (title as { unavailable?: boolean }).unavailable === true;
   useEffect(() => {
     if (!unavailable) return;
     const t = setTimeout(() => void refetchTitle(), 300);
     return () => clearTimeout(t);
   }, [unavailable, refetchTitle]);
 
+  const ready = !!title && !unavailable;
 
-
-  const [season, setSeason] = useState(() => title.seasons[0]?.season ?? 0);
-  const [episode, setEpisode] = useState(() => (title.seasons[0] ? 1 : 0));
+  const [season, setSeason] = useState(0);
+  const [episode, setEpisode] = useState(0);
   const [sourceIndex, setSourceIndex] = useState(0);
   const [theater, setTheater] = useState(false);
   const { canPlay } = useSubscription();
+
+  // Initialise season/episode once the real title arrives.
+  useEffect(() => {
+    if (!ready || !title) return;
+    setSeason(title.seasons[0]?.season ?? 0);
+    setEpisode(title.seasons[0] ? 1 : 0);
+    setSourceIndex(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, id]);
 
   const sources = useQuery({
     queryKey: ["sources", id, season, episode],
     queryFn: () => getSources({ data: { id, season, episode } }),
     staleTime: 60 * 1000,
     retry: 2,
+    enabled: ready,
   });
 
   const related = useQuery({
     queryKey: ["related", id],
     queryFn: () =>
       getRelated({
-        data: { id, title: title.title, genre: title.genre, type: title.type },
+        data: {
+          id,
+          title: title?.title ?? "",
+          genre: title?.genre ?? null,
+          type: title?.type ?? "movie",
+        },
       }),
     staleTime: 5 * 60 * 1000,
+    enabled: ready,
   });
 
 
