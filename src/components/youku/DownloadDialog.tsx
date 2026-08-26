@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { mediaDownloadUrl, subtitleDownloadUrl } from "@/lib/download";
+import { formatBytes, mediaDownloadUrl, mediaProbeUrl, subtitleDownloadUrl } from "@/lib/download";
 import { useSubscription } from "@/hooks/useSubscription";
 
 type StreamSource = {
@@ -20,6 +21,25 @@ type Props = {
 
 export function DownloadDialog({ open, onClose, sources, baseName }: Props) {
   const { subscribed, requireSubscription } = useSubscription();
+  const [probedSizes, setProbedSizes] = useState<Record<string, string | null>>({});
+
+  // Sources without a size (e.g. admin-uploaded Luo/Luganda media) get a
+  // real file size probed through the proxy as soon as the dialog opens.
+  useEffect(() => {
+    if (!open) return;
+    for (const source of sources) {
+      if (source.size || probedSizes[source.id] !== undefined) continue;
+      setProbedSizes((prev) => ({ ...prev, [source.id]: null }));
+      fetch(mediaProbeUrl(source.url))
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          const label = formatBytes(d?.size);
+          if (label) setProbedSizes((prev) => ({ ...prev, [source.id]: label }));
+        })
+        .catch(() => undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, sources]);
 
   const guard = (e: React.MouseEvent) => {
     if (subscribed) return;
@@ -78,7 +98,9 @@ export function DownloadDialog({ open, onClose, sources, baseName }: Props) {
                   <span className="text-sm font-bold text-foreground">
                     {source.resolution ? `${source.resolution}P` : "AUTO"}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">{source.size ?? "—"}</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {source.size ?? probedSizes[source.id] ?? "…"}
+                  </span>
                 </a>
               ))}
             </div>

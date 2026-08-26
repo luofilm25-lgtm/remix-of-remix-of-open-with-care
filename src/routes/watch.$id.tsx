@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Star } from "lucide-react";
 import { Sidebar } from "@/components/youku/Sidebar";
@@ -21,11 +21,26 @@ const titleQuery = (id: string) =>
   });
 
 export const Route = createFileRoute("/watch/$id")({
+  // Bound SSR waiting time — if the catalog is slow, ship the shell fast and
+  // let the browser finish loading instead of hanging the first byte.
   loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(titleQuery(params.id)).catch(() => undefined),
+    Promise.race([
+      context.queryClient.ensureQueryData(titleQuery(params.id)).catch(() => undefined),
+      new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 3500)),
+    ]),
 
   head: ({ loaderData }) => {
-    if (!loaderData || (loaderData as { unavailable?: boolean }).unavailable) {
+    if (!loaderData) {
+      // Loader skipped (slow upstream) — generic tags; the real tags are
+      // applied client-side once the title loads.
+      return {
+        meta: [
+          { title: "Watch — LUOFILM" },
+          { name: "description", content: "Stream movies and series instantly on LUOFILM." },
+        ],
+      };
+    }
+    if ((loaderData as { unavailable?: boolean }).unavailable) {
       return { meta: [{ title: "Unavailable — LUOFILM" }, { name: "robots", content: "noindex" }] };
     }
     const description =
@@ -49,38 +64,54 @@ export const Route = createFileRoute("/watch/$id")({
 
 function WatchPage() {
   const { id } = Route.useParams();
-  const { data: title, refetch: refetchTitle } = useSuspenseQuery(titleQuery(id));
+  const { data: title, refetch: refetchTitle } = useQuery(titleQuery(id));
 
   // Placeholder returned when the host couldn't reach the catalog — retry client-side.
-  const unavailable = (title as { unavailable?: boolean }).unavailable === true;
+  const unavailable = !!title && (title as { unavailable?: boolean }).unavailable === true;
   useEffect(() => {
     if (!unavailable) return;
     const t = setTimeout(() => void refetchTitle(), 300);
     return () => clearTimeout(t);
   }, [unavailable, refetchTitle]);
 
+  const ready = !!title && !unavailable;
 
-
-  const [season, setSeason] = useState(() => title.seasons[0]?.season ?? 0);
-  const [episode, setEpisode] = useState(() => (title.seasons[0] ? 1 : 0));
+  const [season, setSeason] = useState(0);
+  const [episode, setEpisode] = useState(0);
   const [sourceIndex, setSourceIndex] = useState(0);
   const [theater, setTheater] = useState(false);
   const { canPlay } = useSubscription();
+
+  // Initialise season/episode once the real title arrives.
+  useEffect(() => {
+    if (!ready || !title) return;
+    setSeason(title.seasons[0]?.season ?? 0);
+    setEpisode(title.seasons[0] ? 1 : 0);
+    setSourceIndex(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, id]);
 
   const sources = useQuery({
     queryKey: ["sources", id, season, episode],
     queryFn: () => getSources({ data: { id, season, episode } }),
     staleTime: 60 * 1000,
     retry: 2,
+    enabled: ready,
   });
 
   const related = useQuery({
     queryKey: ["related", id],
     queryFn: () =>
       getRelated({
-        data: { id, title: title.title, genre: title.genre, type: title.type },
+        data: {
+          id,
+          title: title?.title ?? "",
+          genre: title?.genre ?? null,
+          type: title?.type ?? "movie",
+        },
       }),
     staleTime: 5 * 60 * 1000,
+    enabled: ready,
   });
 
 

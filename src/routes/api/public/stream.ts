@@ -1,6 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const ALLOWED_HOSTS = [".hakunaymatata.com", ".aoneroom.com", ".inmoviebox.com", ".valiw.hakunaymatata.com"];
+// Catalog CDN hosts plus the storage providers used for admin-uploaded
+// (Luo/Luganda) media, so streaming, downloads and size probes all work.
+const ALLOWED_HOSTS = [
+  ".hakunaymatata.com",
+  ".aoneroom.com",
+  ".inmoviebox.com",
+  ".r2.dev",
+  ".r2.cloudflarestorage.com",
+  ".workers.dev",
+  ".up.railway.app",
+  ".supabase.co",
+  ".supabase.in",
+  "storage.googleapis.com",
+  "firebasestorage.googleapis.com",
+  ".firebasestorage.app",
+  ".googleapis.com",
+  ".googlevideo.com",
+  ".luofilm.site",
+];
 
 export const Route = createFileRoute("/api/public/stream")({
   server: {
@@ -19,6 +37,35 @@ export const Route = createFileRoute("/api/public/stream")({
         }
         if (parsed.protocol !== "https:" || !ALLOWED_HOSTS.some((h) => parsed.hostname.endsWith(h))) {
           return new Response("Host not allowed", { status: 403 });
+        }
+
+        // ?probe=1 → lightweight metadata lookup (file size/type) without
+        // downloading the media. Used to show real sizes in download dialogs.
+        if (params.get("probe")) {
+          const json = (size: number | null, type: string | null) =>
+            Response.json(
+              { size, type },
+              {
+                headers: {
+                  "cache-control": "public, max-age=86400",
+                  "access-control-allow-origin": "*",
+                },
+              },
+            );
+          try {
+            const head = await fetch(parsed.toString(), { method: "HEAD" });
+            const length = Number(head.headers.get("content-length")) || null;
+            if (head.ok && length) return json(length, head.headers.get("content-type"));
+            // Some CDNs reject HEAD — fall back to a 1-byte range request.
+            const rangeRes = await fetch(parsed.toString(), {
+              headers: { range: "bytes=0-0" },
+            });
+            const contentRange = rangeRes.headers.get("content-range");
+            const total = contentRange ? Number(contentRange.split("/")[1]) || null : null;
+            return json(total, rangeRes.headers.get("content-type"));
+          } catch {
+            return json(null, null);
+          }
         }
 
         const range = request.headers.get("range");
