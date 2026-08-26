@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { mediaDownloadUrl, subtitleDownloadUrl } from "@/lib/download";
+import { formatBytes, mediaDownloadUrl, mediaProbeUrl, subtitleDownloadUrl } from "@/lib/download";
 import { useSubscription } from "@/hooks/useSubscription";
 
 type StreamSource = {
