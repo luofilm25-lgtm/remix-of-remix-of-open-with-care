@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Star } from "lucide-react";
 import { Sidebar } from "@/components/youku/Sidebar";
@@ -21,11 +21,26 @@ const titleQuery = (id: string) =>
   });
 
 export const Route = createFileRoute("/watch/$id")({
+  // Bound SSR waiting time — if the catalog is slow, ship the shell fast and
+  // let the browser finish loading instead of hanging the first byte.
   loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(titleQuery(params.id)).catch(() => undefined),
+    Promise.race([
+      context.queryClient.ensureQueryData(titleQuery(params.id)).catch(() => undefined),
+      new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 3500)),
+    ]),
 
   head: ({ loaderData }) => {
-    if (!loaderData || (loaderData as { unavailable?: boolean }).unavailable) {
+    if (!loaderData) {
+      // Loader skipped (slow upstream) — generic tags; the real tags are
+      // applied client-side once the title loads.
+      return {
+        meta: [
+          { title: "Watch — LUOFILM" },
+          { name: "description", content: "Stream movies and series instantly on LUOFILM." },
+        ],
+      };
+    }
+    if ((loaderData as { unavailable?: boolean }).unavailable) {
       return { meta: [{ title: "Unavailable — LUOFILM" }, { name: "robots", content: "noindex" }] };
     }
     const description =
