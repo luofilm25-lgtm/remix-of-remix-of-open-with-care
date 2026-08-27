@@ -48,7 +48,7 @@ function AdminPage() {
     <div className="min-h-screen bg-background">
       <Sidebar />
       <div className="lg:pl-[var(--sidebar-w)]">
-        <div className="relative h-14">
+        <div className="relative h-[104px] lg:h-14">
           <TopBar />
         </div>
         <main className="px-2 pb-28 sm:px-4 lg:px-6 lg:pb-10">
