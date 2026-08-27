@@ -120,8 +120,8 @@ function HomePage() {
           <TopBar />
 
           {!data && (
-            <div className="relative h-[300px] w-full animate-pulse bg-muted/40 sm:h-[400px] lg:h-[460px]">
-              <div className="absolute inset-x-0 bottom-12 z-20 pl-3 sm:pl-4 lg:bottom-16 lg:pl-8">
+            <div className="relative h-[360px] w-full animate-pulse bg-muted/40 sm:h-[460px] lg:h-[520px]">
+              <div className="absolute inset-x-0 bottom-5 z-30 pl-3 sm:pl-4 lg:bottom-7 lg:pl-8">
                 <VjRail />
               </div>
             </div>
@@ -134,7 +134,7 @@ function HomePage() {
           )}
 
           {slide && (
-            <section className="relative h-[300px] w-full overflow-hidden sm:h-[400px] lg:h-[460px]">
+            <section className="relative h-[360px] w-full overflow-hidden sm:h-[460px] lg:h-[520px]">
               {slide.backdrop ? (
                 <img
                   key={slide.backdrop}
@@ -145,8 +145,12 @@ function HomePage() {
               ) : (
                 <div className="size-full bg-card" />
               )}
-              <div className="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-end gap-2 px-3 pb-24 pt-10 lg:justify-center lg:gap-3 lg:px-8 lg:pb-0">
-                <h1 className="text-lg font-black tracking-wide text-foreground drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] sm:text-xl lg:text-2xl">
+
+              {/* Bottom fade so the carousel melts behind the Trending rail instead of cutting off. */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-44 bg-gradient-to-t from-background via-background/70 to-transparent sm:h-52 lg:h-60" />
+
+              <div className="absolute inset-y-0 left-0 z-20 flex max-w-xl flex-col justify-end gap-2 px-3 pb-36 pt-10 lg:justify-end lg:gap-3 lg:px-8 lg:pb-28">
+                <h1 className="text-base font-black tracking-wide text-foreground drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] sm:text-lg lg:text-2xl">
                   {slide.title}
                 </h1>
                 <Link
@@ -164,12 +168,12 @@ function HomePage() {
                 </p>
               </div>
 
-              <div className="absolute inset-x-0 -bottom-3 z-20 pl-3 sm:pl-4 lg:-bottom-4 lg:pl-8">
+              <div className="absolute inset-x-0 bottom-4 z-30 pl-3 sm:pl-4 lg:bottom-6 lg:pl-8">
                 <VjRail />
               </div>
 
               {slides.length > 1 && (
-                <div className="absolute bottom-20 right-5 z-10 flex gap-2 lg:bottom-20 lg:right-8">
+                <div className="absolute bottom-24 right-5 z-20 flex gap-2 lg:bottom-28 lg:right-8">
                   {slides.map((s, i) => (
                     <button
                       key={s.id}
@@ -187,7 +191,7 @@ function HomePage() {
           )}
 
           {!!trending.length && (
-            <div className={`relative z-10 pl-3 sm:pl-4 lg:pl-8 ${slide ? "-mt-8 lg:-mt-14" : "mt-4"}`}>
+            <div className={`relative z-10 pl-3 sm:pl-4 lg:pl-8 ${slide ? "-mt-14 lg:-mt-20" : "mt-4"}`}>
               <Rail title="Trending now" items={trending} ranked />
             </div>
           )}
