@@ -39,6 +39,22 @@ export type LuoEpisode = {
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
+/**
+ * Firestore docs written by different tools store timestamps as ISO strings,
+ * `{ seconds }` Timestamps, Dates or epoch numbers. Normalise them all so the
+ * library sorts newest-first regardless of which admin tool wrote the doc.
+ */
+function toIso(v: unknown): string | null {
+  if (!v) return null;
+  if (typeof v === "string") return Number.isFinite(Date.parse(v)) ? new Date(v).toISOString() : null;
+  if (typeof v === "number") return new Date(v > 1e12 ? v : v * 1000).toISOString();
+  if (v instanceof Date) return v.toISOString();
+  const o = v as { seconds?: number; _seconds?: number; toDate?: () => Date };
+  if (typeof o.toDate === "function") return o.toDate().toISOString();
+  const secs = o.seconds ?? o._seconds;
+  return typeof secs === "number" ? new Date(secs * 1000).toISOString() : null;
+}
+
 /** Firestore `media` doc -> LuoTitle. Legacy docs have no `language` field. */
 function toTitle(r: Row): LuoTitle {
   const published = r.published ?? r.is_published ?? true;
@@ -55,7 +71,7 @@ function toTitle(r: Row): LuoTitle {
     genre: str(r.genre) ?? str(r.section),
     year: typeof r.year === "number" ? r.year : r.year ? Number(r.year) || null : null,
     published: !!published,
-    created_at: str(r.created_at) ?? nowIso(),
+    created_at: toIso(r.created_at) ?? toIso(r.updated_at) ?? nowIso(),
   };
 }
 
@@ -67,7 +83,8 @@ function toEpisode(r: Row): LuoEpisode {
     episode: Number(r.episode ?? r.episode_number ?? 1) || 1,
     name: str(r.name) ?? str(r.title),
     video_url: str(r.video_url) ?? "",
-    created_at: str(r.created_at) ?? nowIso(),
+    // Unknown timestamps sort last, so genuinely new uploads stay on top.
+    created_at: toIso(r.created_at) ?? toIso(r.updated_at) ?? "",
   };
 }
 
@@ -76,7 +93,7 @@ async function readTitles() {
   if (error) throw error;
   return (data as Row[])
     .map(toTitle)
-    .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0));
+    .sort((a, b) => (Date.parse(b.created_at) || 0) - (Date.parse(a.created_at) || 0));
 }
 
 export async function listLuoTitles(language: LuoLanguage, includeUnpublished = false) {

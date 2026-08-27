@@ -95,7 +95,7 @@ export function LuoWatch({ id, language }: { id: string; language: LuoLanguage }
     <div className="min-h-screen bg-background">
       <Sidebar />
       <div className="lg:pl-[var(--sidebar-w)]">
-        <div className="relative h-14">
+        <div className="relative h-[104px] lg:h-14">
           <TopBar />
         </div>
         <main className="px-3 pb-28 sm:px-4 lg:px-8 lg:pb-16">
