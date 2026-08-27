@@ -89,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const signOut = useCallback(async () => {
+    disableGoogleAutoSelect();
     await db.auth.signOut();
   }, []);
 
