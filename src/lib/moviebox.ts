@@ -635,6 +635,8 @@ export async function fetchRelated(details: {
   );
 
   const generic = new Set(genres.map(norm));
+  const BROAD = new Set(["drama", "action", "comedy", "family", "adventure", "kids"]);
+  const specific = genres.map((g) => g.toLowerCase()).filter((g) => !BROAD.has(g));
   const seenId = new Set<string>([details.id]);
   const seenName = new Set<string>([norm(details.title)]);
 
@@ -649,9 +651,16 @@ export async function fetchRelated(details: {
       if (!item.poster) continue;
       if (generic.has(name) || name.length < 3) continue; // "Action", "Drama", …
       if (item.type !== details.type) continue; // movies next to movies, series next to series
-      const shares =
-        !genres.length ||
-        genres.some((g) => (item.genre ?? "").toLowerCase().includes(g.toLowerCase()));
+      // Same franchise ("Peaky Blinders S6" next to "Peaky Blinders") is not a
+      // recommendation — drop anything whose name contains the source name.
+      const self = norm(details.title);
+      if (name.includes(self) || self.includes(name)) continue;
+      const itemGenres = (item.genre ?? "").toLowerCase();
+      // Match on the most specific genre available (Crime, Romance, Horror…)
+      // instead of a catch-all like Drama, so rails stay on-topic.
+      const shares = specific.length
+        ? specific.some((g) => itemGenres.includes(g))
+        : !genres.length || genres.some((g) => itemGenres.includes(g.toLowerCase()));
       if (!shares) continue;
       seenId.add(item.id);
       seenName.add(name);
