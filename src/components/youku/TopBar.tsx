@@ -16,7 +16,7 @@ export function TopBar() {
   };
 
   return (
-    <header className="absolute inset-x-0 top-0 z-20 flex h-14 items-center gap-3 px-3 lg:gap-4 lg:pl-[calc(var(--sidebar-w)+20px)]">
+    <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center gap-3 bg-background/70 px-3 backdrop-blur-xl lg:gap-4 lg:pl-[calc(var(--sidebar-w)+20px)]">
       <Link to="/" className="flex min-w-0 items-center gap-1.5 lg:hidden">
         <img src={markAsset} alt="" className="h-7 w-auto shrink-0" />
         <span className="whitespace-nowrap font-[Bebas_Neue,system-ui,sans-serif] text-[18px] leading-none tracking-wide">

@@ -1,16 +1,30 @@
-/** Video delivery helpers. */
+/**
+ * Video delivery helpers.
+ *
+ * Media bytes are served STRAIGHT FROM the provider CDN — never through our
+ * own origin. Proxying video would push every played/downloaded gigabyte
+ * through the hosting edge (Vercel "Fast Origin Transfer"), which burns the
+ * free allowance almost immediately. The proxy stays available only as a
+ * last-resort fallback for hosts that block cross-origin playback, and for
+ * tiny text payloads (subtitles, size probes).
+ */
 
 /** HLS manifests need hls.js everywhere except Safari. */
 export function isHlsUrl(url: string) {
   return /\.m3u8(\?|$)/i.test(url);
 }
 
-/** Route provider CDN media through our own origin (CORS + referrer safe). */
+/** Direct CDN playback URL (zero origin bandwidth). */
 export function streamUrl(url: string) {
+  return url;
+}
+
+/** Same media, but relayed through our origin. Fallback only. */
+export function proxiedStreamUrl(url: string) {
   return `/api/public/stream?url=${encodeURIComponent(url)}`;
 }
 
-/** Route provider subtitles through our SRT→VTT proxy. */
+/** Route provider subtitles through our SRT→VTT proxy (a few KB only). */
 export function subtitleUrl(url: string) {
   return `/api/public/subtitle?url=${encodeURIComponent(url)}`;
 }
@@ -22,9 +36,14 @@ const slug = (text: string) =>
     .replace(/\s+/g, ".")
     .slice(0, 80) || "luofilm";
 
-/** Force-download a media file through our proxy. */
-export function mediaDownloadUrl(url: string, filename: string) {
-  return `/api/public/stream?url=${encodeURIComponent(url)}&dl=${encodeURIComponent(`${slug(filename)}.mp4`)}`;
+/** Download a media file directly from the CDN (no origin bandwidth). */
+export function mediaDownloadUrl(url: string, _filename: string) {
+  return url;
+}
+
+/** Suggested download filename for the browser's `download` attribute. */
+export function mediaDownloadName(filename: string) {
+  return `${slug(filename)}.mp4`;
 }
 
 /** Force-download a subtitle (converted to .vtt) through our proxy. */
@@ -32,7 +51,7 @@ export function subtitleDownloadUrl(url: string, filename: string) {
   return `/api/public/subtitle?url=${encodeURIComponent(url)}&dl=${encodeURIComponent(`${slug(filename)}.vtt`)}`;
 }
 
-/** Metadata probe (file size/type) through our proxy — no download. */
+/** Metadata probe (file size/type) through our proxy — headers only. */
 export function mediaProbeUrl(url: string) {
   return `/api/public/stream?url=${encodeURIComponent(url)}&probe=1`;
 }
