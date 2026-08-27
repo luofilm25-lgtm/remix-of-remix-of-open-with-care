@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { isHlsUrl } from "@/lib/download";
+import { isHlsUrl, proxiedStreamUrl } from "@/lib/download";
 import {
   Check,
   Info,
