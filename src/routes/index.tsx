@@ -145,34 +145,26 @@ function HomePage() {
               ) : (
                 <div className="size-full bg-card" />
               )}
-              <div
-                className="absolute inset-0"
-                style={{ backgroundImage: "var(--gradient-hero-fade)" }}
-              />
-              <div
-                className="absolute inset-0"
-                style={{ backgroundImage: "var(--gradient-hero-bottom)" }}
-              />
-              <div className="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-end gap-2 px-3 pb-20 pt-10 lg:justify-center lg:gap-3 lg:px-8 lg:pb-0">
-                <h1 className="text-2xl font-black tracking-widest text-foreground sm:text-3xl lg:text-4xl">
+              <div className="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-end gap-2 px-3 pb-24 pt-10 lg:justify-center lg:gap-3 lg:px-8 lg:pb-0">
+                <h1 className="text-lg font-black tracking-wide text-foreground drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] sm:text-xl lg:text-2xl">
                   {slide.title}
                 </h1>
                 <Link
                   to="/watch/$id"
                   params={{ id: slide.id }}
-                  className="mt-1 flex w-[132px] items-center justify-center gap-2 rounded bg-foreground/20 py-3 text-base font-semibold text-foreground backdrop-blur-md transition-colors hover:bg-foreground/30"
+                  className="mt-1 flex w-[120px] items-center justify-center gap-2 rounded bg-foreground/20 py-2.5 text-sm font-semibold text-foreground backdrop-blur-md transition-colors hover:bg-foreground/30"
                 >
-                  <Play className="size-5 fill-current" />
+                  <Play className="size-4 fill-current" />
                   Play
                 </Link>
-                <p className="max-w-md truncate text-[11px] text-foreground/85">
+                <p className="max-w-md truncate text-[11px] text-foreground/85 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
                   {[slide.year, slide.genre, slide.rating ? `IMDb ${slide.rating}` : null]
                     .filter(Boolean)
                     .join(" · ")}
                 </p>
               </div>
 
-              <div className="absolute inset-x-0 bottom-12 z-20 pl-3 sm:pl-4 lg:bottom-16 lg:pl-8">
+              <div className="absolute inset-x-0 -bottom-3 z-20 pl-3 sm:pl-4 lg:-bottom-4 lg:pl-8">
                 <VjRail />
               </div>
 
