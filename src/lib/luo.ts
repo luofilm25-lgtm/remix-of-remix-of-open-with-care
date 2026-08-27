@@ -83,7 +83,8 @@ function toEpisode(r: Row): LuoEpisode {
     episode: Number(r.episode ?? r.episode_number ?? 1) || 1,
     name: str(r.name) ?? str(r.title),
     video_url: str(r.video_url) ?? "",
-    created_at: toIso(r.created_at) ?? toIso(r.updated_at) ?? nowIso(),
+    // Unknown timestamps sort last, so genuinely new uploads stay on top.
+    created_at: toIso(r.created_at) ?? toIso(r.updated_at) ?? "",
   };
 }
 
@@ -92,7 +93,7 @@ async function readTitles() {
   if (error) throw error;
   return (data as Row[])
     .map(toTitle)
-    .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+    .sort((a, b) => (Date.parse(b.created_at) || 0) - (Date.parse(a.created_at) || 0));
 }
 
 export async function listLuoTitles(language: LuoLanguage, includeUnpublished = false) {
