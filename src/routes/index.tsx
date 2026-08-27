@@ -83,10 +83,13 @@ function HomePage() {
       queryOptions({
         queryKey: ["home-section", section.title],
         queryFn: () => fetchSection(section),
-        staleTime: 10 * 60 * 1000,
+        staleTime: 2 * 60 * 1000,
+        refetchInterval: 10 * 60 * 1000,
+        refetchOnWindowFocus: true,
       }),
     ),
   });
+
 
   const sections = HOME_SECTIONS.map((section, i) => ({
     ...section,
