@@ -267,6 +267,102 @@ export async function fetchHome() {
   };
 }
 
+/** Emoji / decoration stripped rail title. */
+const railTitle = (raw: string) =>
+  raw
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+/**
+ * Every real, populated rail of one upstream tab (0 = home, 2 = movies,
+ * 5 = TV series). Banners, filters and empty promo blocks are skipped, so what
+ * comes back is exactly the catalog's own live sections with live items.
+ */
+export async function fetchTabRows(tabId: number) {
+  const data = await request(
+    "GET",
+    `/wefeed-mobile-bff/tab-operating?page=1&tabId=${tabId}&version=`,
+  ).catch(() => null);
+  const blocks: any[] = Array.isArray(data?.items) ? data.items : [];
+  const rows: { title: string; items: CatalogItem[] }[] = [];
+  const takenTitles = new Set<string>();
+
+  for (const block of blocks) {
+    if (block?.banner || block?.type === "FILTER" || block?.type === "BANNER") continue;
+    const seen = new Set<string>();
+    const items: CatalogItem[] = [];
+    const push = (subject: any) => {
+      const item = toItem(subject);
+      if (item?.poster && !seen.has(item.id)) {
+        seen.add(item.id);
+        items.push(item);
+      }
+    };
+    if (Array.isArray(block?.subjects)) block.subjects.forEach(push);
+    if (Array.isArray(block?.groups)) {
+      for (const group of block.groups)
+        if (Array.isArray(group?.subjects)) group.subjects.forEach(push);
+    }
+    if (items.length < 4) continue;
+    const title = railTitle(String(block?.title || ""));
+    if (!title || /appointment|coming soon/i.test(title)) continue;
+    const key = title.toLowerCase();
+    if (takenTitles.has(key)) {
+      // Upstream repeats some rails; merge instead of showing them twice.
+      const existing = rows.find((r) => r.title.toLowerCase() === key)!;
+      const ids = new Set(existing.items.map((i) => i.id));
+      existing.items = [...existing.items, ...items.filter((i) => !ids.has(i.id))].slice(0, 24);
+      continue;
+    }
+    takenTitles.add(key);
+    rows.push({ title, items: items.slice(0, 24) });
+  }
+  return rows;
+}
+
+/**
+ * The catalog's real, live "most trending" line-up: the home trending rail plus
+ * the movie and TV tabs' own trending / top-this-week rails, in that order.
+ */
+export async function fetchMostTrending(): Promise<CatalogItem[]> {
+  const [home, movies, series] = await Promise.all([
+    fetchTabRows(0),
+    fetchTabRows(2),
+    fetchTabRows(5),
+  ]);
+  const pick = (rows: { title: string; items: CatalogItem[] }[], re: RegExp) =>
+    rows.filter((r) => re.test(r.title)).flatMap((r) => r.items);
+
+  const ordered = [
+    ...pick(home, /trending/i),
+    ...pick(series, /top series this week|trending/i),
+    ...pick(movies, /trending|top movies/i),
+    ...pick(home, /cinema|hot short tv/i),
+  ];
+  const seen = new Set<string>();
+  return ordered.filter((i) => (seen.has(i.id) ? false : (seen.add(i.id), true))).slice(0, 24);
+}
+
+/** All live catalog rails from the movie + TV tabs, for the home page. */
+export async function fetchLiveRails() {
+  const [movies, series] = await Promise.all([fetchTabRows(2), fetchTabRows(5)]);
+  const out: { title: string; items: CatalogItem[] }[] = [];
+  const seen = new Set<string>();
+  // Interleave TV and movie rails so the page alternates instead of grouping.
+  for (let i = 0; i < Math.max(series.length, movies.length); i += 1) {
+    for (const row of [series[i], movies[i]]) {
+      if (!row) continue;
+      const key = row.title.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(row);
+    }
+  }
+  return out;
+}
+
+
 
 export async function searchCatalog(keyword: string, page = 1) {
   const data = await request("POST", "/wefeed-mobile-bff/subject-api/search/v2", {
