@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { formatBytes, mediaDownloadUrl, mediaProbeUrl, subtitleDownloadUrl } from "@/lib/download";
+import {
+  formatBytes,
+  mediaDownloadName,
+  mediaDownloadUrl,
+  mediaProbeUrl,
+  subtitleDownloadUrl,
+} from "@/lib/download";
 import { useSubscription } from "@/hooks/useSubscription";
 
 type StreamSource = {
@@ -30,10 +36,22 @@ export function DownloadDialog({ open, onClose, sources, baseName }: Props) {
     for (const source of sources) {
       if (source.size || probedSizes[source.id] !== undefined) continue;
       setProbedSizes((prev) => ({ ...prev, [source.id]: null }));
-      fetch(mediaProbeUrl(source.url))
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          const label = formatBytes(d?.size);
+      // Ask the CDN directly first (no origin bandwidth); only fall back to
+      // our proxy for hosts that block cross-origin HEAD requests.
+      const direct = fetch(source.url, { method: "HEAD" })
+        .then((r) => (r.ok ? Number(r.headers.get("content-length")) || null : null))
+        .catch(() => null);
+      direct
+        .then((size) =>
+          size
+            ? size
+            : fetch(mediaProbeUrl(source.url))
+                .then((r) => (r.ok ? r.json() : null))
+                .then((d) => d?.size ?? null)
+                .catch(() => null),
+        )
+        .then((size) => {
+          const label = formatBytes(size);
           if (label) setProbedSizes((prev) => ({ ...prev, [source.id]: label }));
         })
         .catch(() => undefined);
@@ -91,7 +109,7 @@ export function DownloadDialog({ open, onClose, sources, baseName }: Props) {
                 <a
                   key={source.id}
                   href={mediaDownloadUrl(source.url, `${baseName}.${source.resolution || "auto"}p`)}
-                  download
+                  download={mediaDownloadName(`${baseName}.${source.resolution || "auto"}p`)}
                   onClick={guard}
                   className={tile}
                 >
