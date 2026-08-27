@@ -15,8 +15,13 @@ import { HOME_SECTIONS, fetchSection } from "@/lib/home-sections";
 const homeQuery = queryOptions({
   queryKey: ["home"],
   queryFn: () => getHome(),
-  staleTime: 5 * 60 * 1000,
+  // Keep the front page live: the catalog's trending / coming-soon rails move
+  // every few minutes, so refresh in the background rather than caching for long.
+  staleTime: 60 * 1000,
+  refetchInterval: 5 * 60 * 1000,
+  refetchOnWindowFocus: true,
 });
+
 
 
 
