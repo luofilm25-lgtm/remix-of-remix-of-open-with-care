@@ -14,6 +14,13 @@ export const firebaseConfig = {
   measurementId: "G-33C3LZDH92",
 };
 
+/**
+ * OAuth web client ID used by Google One Tap (Firebase Console → Authentication
+ * → Google → Web SDK configuration). Public value, safe in client code.
+ */
+export const GOOGLE_CLIENT_ID: string =
+  (import.meta.env['VITE_GOOGLE_CLIENT_ID'] as string | undefined) ?? "";
+
 let _app: FirebaseApp | undefined;
 
 export function firebaseApp(): FirebaseApp {

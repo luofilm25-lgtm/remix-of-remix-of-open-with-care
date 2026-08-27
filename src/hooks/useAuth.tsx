@@ -11,6 +11,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { getFbAuth, initAnalytics } from "@/lib/firebase";
 import { db, ensureProfile, hasAdminRole, isAdminCredential, type SessionUser } from "@/lib/db";
 import { fdb } from "@/lib/fdb";
+import { disableGoogleAutoSelect, startGoogleOneTap } from "@/lib/google-one-tap";
 
 type Profile = Record<string, unknown> & { id?: string; email?: string | null; phone?: string | null };
 
@@ -88,7 +89,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user]);
 
+  // Site-wide Google One Tap prompt for signed-out visitors.
+  useEffect(() => {
+    if (loading || user) return;
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void startGoogleOneTap({ onSuccess: () => setTick((t) => t + 1) }).then((fn) =>
+        cancelled ? fn() : (stop = fn),
+      );
+    }, 1200);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      stop?.();
+    };
+  }, [loading, user]);
+
+
   const signOut = useCallback(async () => {
+    disableGoogleAutoSelect();
     await db.auth.signOut();
   }, []);
 

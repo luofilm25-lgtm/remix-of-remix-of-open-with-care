@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { authMessage, signInWithGoogle, signInWithIdentifier, signUpWithIdentifier } from "@/lib/db";
 import { useAuth } from "@/hooks/useAuth";
 import { isValidMsisdn } from "@/lib/relworx";
+import { startGoogleOneTap } from "@/lib/google-one-tap";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
@@ -12,7 +13,26 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
-  const { refresh } = useAuth();
+  const { refresh, user } = useAuth();
+
+  // Google One Tap: offered right inside the modal, same Firebase session.
+  useEffect(() => {
+    if (!open || user) return;
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    void startGoogleOneTap({
+      onSuccess: () => {
+        toast.success("Signed in with Google");
+        refresh();
+        onOpenChange(false);
+      },
+      onError: (err) => toast.error(authMessage(err)),
+    }).then((fn) => (cancelled ? fn() : (stop = fn)));
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, [open, user, refresh, onOpenChange]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
