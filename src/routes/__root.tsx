@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
 import { AuthProvider } from "@/hooks/useAuth";
+import { DevToolsGuard } from "@/components/security/DevToolsGuard";
 
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -129,6 +130,7 @@ function RootComponent() {
           <Outlet />
         </SubscriptionProvider>
       </AuthProvider>
+      <DevToolsGuard />
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
 

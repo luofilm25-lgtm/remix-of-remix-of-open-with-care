@@ -604,15 +604,6 @@ export async function fetchRelated(details: {
     .map((g) => g.trim())
     .filter(Boolean);
 
-  const terms = genres.length
-    ? genres.slice(0, 3).map((g) => `${g} ${details.type === "series" ? "series" : "movies"}`)
-    : [details.title];
-  if (genres.length) terms.push(genres.join(" "));
-
-  const pages = await Promise.all(
-    terms.map((q) => searchCatalog(q, 1).catch(() => [] as CatalogItem[])),
-  );
-
   const norm = (s: string) =>
     s
       .toLowerCase()
@@ -620,11 +611,33 @@ export async function fetchRelated(details: {
       .replace(/\bs\d+\s*-\s*s?\d+\b/g, "")
       .replace(/\bseason\s*\d+\b/g, "")
       .replace(/[^a-z0-9]+/g, "");
+
+  const kind = details.type === "series" ? "series" : "movies";
+  // Seed the query set with the title's own words so two titles that share a
+  // genre don't come back with an identical "You may also like" rail.
+  const titleWords = details.title
+    .replace(/\[[^\]]*\]/g, " ")
+    .split(/[^A-Za-z0-9]+/)
+    .filter((w) => w.length > 3)
+    .slice(0, 2);
+
+  const terms = new Set<string>();
+  for (const g of genres.slice(0, 3)) {
+    terms.add(`${g} ${kind}`);
+    for (const w of titleWords) terms.add(`${w} ${g}`);
+  }
+  if (genres.length > 1) terms.add(`${genres.slice(0, 2).join(" ")} ${kind}`);
+  for (const w of titleWords) terms.add(w);
+  if (!terms.size) terms.add(details.title);
+
+  const pages = await Promise.all(
+    [...terms].map((q) => searchCatalog(q, 1).catch(() => [] as CatalogItem[])),
+  );
+
   const generic = new Set(genres.map(norm));
   const seenId = new Set<string>([details.id]);
   const seenName = new Set<string>([norm(details.title)]);
 
-  // Round-robin the term results so every genre is represented.
   const merged: CatalogItem[] = [];
   const max = Math.max(...pages.map((p) => p.length), 0);
   for (let i = 0; i < max; i++) {
@@ -635,6 +648,7 @@ export async function fetchRelated(details: {
       if (seenId.has(item.id) || seenName.has(name)) continue;
       if (!item.poster) continue;
       if (generic.has(name) || name.length < 3) continue; // "Action", "Drama", …
+      if (item.type !== details.type) continue; // movies next to movies, series next to series
       const shares =
         !genres.length ||
         genres.some((g) => (item.genre ?? "").toLowerCase().includes(g.toLowerCase()));
@@ -645,7 +659,11 @@ export async function fetchRelated(details: {
     }
   }
 
-  return merged
-    .sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0))
-    .slice(0, 18);
+  // Stable per-title rotation: same title always gets the same rail, different
+  // titles in the same genre start from a different offset.
+  let seed = 0;
+  for (const ch of details.id) seed = (seed * 31 + ch.charCodeAt(0)) % 100000;
+  const ranked = merged.sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0));
+  const offset = ranked.length > 24 ? seed % Math.max(1, ranked.length - 18) : 0;
+  return ranked.slice(offset, offset + 18);
 }
