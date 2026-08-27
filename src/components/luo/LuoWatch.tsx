@@ -252,6 +252,38 @@ export function LuoWatch({ id, language }: { id: string; language: LuoLanguage }
   );
 }
 
+type RelatedItem = {
+  id: string;
+  title: string;
+  poster: string;
+  type: "series" | "movie";
+  year: string | null;
+  genre: string | null;
+};
+
+/** Grid of related posters, reused for the mobile and desktop placements. */
+function RelatedGrid({ items, language }: { items: RelatedItem[]; language: LuoLanguage }) {
+  return (
+    <div className="grid grid-cols-3 gap-x-2 gap-y-4 sm:grid-cols-4 sm:gap-x-3 sm:gap-y-5 md:grid-cols-5 xl:grid-cols-6">
+      {items.map((item) => (
+        <Link
+          key={item.id}
+          to={language === "luo" ? "/luo/$id" : "/luganda/$id"}
+          params={{ id: item.id }}
+          className="block"
+        >
+          <MediaCardShell
+            poster={item.poster}
+            label={item.title}
+            badge={item.type === "series" ? "Series" : "Movie"}
+            meta={[item.year, item.genre].filter(Boolean).join(" · ")}
+          />
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 /** Poster tile that matches the catalogue cards but links inside the Luo pages. */
 function MediaCardShell({
   poster,
