@@ -329,16 +329,18 @@ async function lookupTitle(title: string, section: HomeSection): Promise<Catalog
   return best && best.s >= 20 ? best.item : null;
 }
 
-/** Fill a rail either from an explicit title list or from merged search feeds. */
-export async function fetchSection(section: HomeSection): Promise<CatalogItem[]> {
-  if (section.titles?.length) {
-    const found = await Promise.all(section.titles.map((t) => lookupTitle(t, section)));
-    return dedupe(found.filter((i): i is CatalogItem => !!i));
-  }
+/** Minimum items a rail should carry before we stop backfilling. */
+const TARGET = 18;
 
-
+/** Live search feed for a section, filtered by the catalog's own metadata. */
+async function fetchFeed(section: HomeSection): Promise<CatalogItem[]> {
+  const keywords = section.keywords ?? [];
+  if (!keywords.length) return [];
   const batches = await Promise.all(
-    (section.keywords ?? []).map((q) => searchCatalog(q, 1).catch(() => [] as CatalogItem[])),
+    keywords.flatMap((q) => [
+      searchCatalog(q, 1).catch(() => [] as CatalogItem[]),
+      searchCatalog(q, 2).catch(() => [] as CatalogItem[]),
+    ]),
   );
 
   const keep = (item: CatalogItem) =>
@@ -350,9 +352,30 @@ export async function fetchSection(section: HomeSection): Promise<CatalogItem[]>
 
   const filtered = batches.map((list) => list.filter(keep));
 
+  // Round-robin so every keyword contributes, keeping rails varied and fresh.
   const merged: CatalogItem[] = [];
   for (let i = 0; i < 20; i += 1) {
     for (const list of filtered) if (list[i]) merged.push(list[i]!);
   }
-  return dedupe(merged).slice(0, 24);
+  return dedupe(merged);
 }
+
+/**
+ * Fill a rail. Curated titles come first (so the well-known line-up is exact),
+ * then the rail is topped up from live catalog searches — that way every
+ * section is full and refreshes with whatever the catalog is pushing today
+ * instead of being a short, static list.
+ */
+export async function fetchSection(section: HomeSection): Promise<CatalogItem[]> {
+  const [curated, feed] = await Promise.all([
+    section.titles?.length
+      ? Promise.all(section.titles.map((t) => lookupTitle(t, section))).then((r) =>
+          r.filter((i): i is CatalogItem => !!i),
+        )
+      : Promise.resolve([] as CatalogItem[]),
+    fetchFeed(section),
+  ]);
+
+  return dedupe([...curated, ...feed]).slice(0, Math.max(TARGET, 24));
+}
+
