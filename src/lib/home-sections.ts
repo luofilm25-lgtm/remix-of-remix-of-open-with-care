@@ -41,6 +41,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "The Summer I Turned Pretty",
       "Wednesday",
     ],
+    keywords: ["popular series 2026","new series 2026","top tv show","trending series"],
     type: "series",
   },
   {
@@ -57,6 +58,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Man of War",
       "Kill Trip",
     ],
+    keywords: ["popular movie 2026","new movie 2026","box office","trending movie"],
     type: "movie",
   },
   {
@@ -75,6 +77,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Blood & Water",
       "The Lord of the Rings: The Rings of Power",
     ],
+    keywords: ["trending now","most popular 2026","top 10","hit series"],
     ranked: true,
   },
   {
@@ -89,6 +92,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Ruthless",
       "Bruh",
     ],
+    keywords: ["bet plus","tyler perry","black drama series","urban drama"],
   },
   {
     title: "Action & Thriller",
@@ -102,6 +106,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "M.I.A.",
       "Prisoner",
     ],
+    keywords: ["action thriller 2026","thriller series","spy thriller","crime thriller"],
   },
   {
     title: "Gangster",
@@ -115,6 +120,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "The Family Business",
       "Godfather of Harlem",
     ],
+    keywords: ["gangster series","mafia crime","crime family drama","drug empire"],
   },
   {
     title: "C-Drama",
@@ -152,6 +158,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "His Dark Materials",
       "Rings of Power",
     ],
+    keywords: ["epic fantasy series","medieval fantasy","dragons kingdom","sword sorcery"],
     type: "series",
     avoidGenre: /animation|anime/i,
   },
@@ -167,6 +174,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Seinfeld",
       "Two and a Half Men",
     ],
+    keywords: ["sitcom","comedy series","family sitcom","funny series"],
   },
   {
     title: "Teen Romance",
@@ -180,6 +188,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Off Campus",
       "Euphoria",
     ],
+    keywords: ["teen romance","high school romance","young love series","college romance"],
   },
   {
     title: "Superhero Series",
@@ -195,6 +204,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Superman & Lois",
       "The Flash",
     ],
+    keywords: ["superhero series","comic book series","dc series","marvel series"],
     type: "series",
   },
   {
@@ -211,6 +221,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Bel-Air",
       "Queen Sugar",
     ],
+    keywords: ["black series drama","african american series","urban series","hood drama"],
     type: "series",
   },
   {
@@ -232,6 +243,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Teen Wolf",
       "Fate: The Winx Saga",
     ],
+    keywords: ["teen fantasy series","supernatural teen","magic school series","young adult fantasy"],
     avoidGenre: /animation|anime/i,
   },
   {
@@ -246,6 +258,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Re: Zero - Starting Life in Another World",
       "Baki-Dou",
     ],
+    keywords: ["anime english dubbed","anime series 2026","shonen anime","isekai anime"],
   },
   {
     title: "K-Drama",
