@@ -95,10 +95,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let stop: (() => void) | undefined;
     let cancelled = false;
     const timer = setTimeout(() => {
-      void startGoogleOneTap({ onSuccess: () => setTick((t) => t + 1) }).then((fn) =>
+      void startGoogleOneTap({
+        context: "use",
+        onSuccess: () => setTick((t) => t + 1),
+      }).then((fn) =>
         cancelled ? fn() : (stop = fn),
       );
-    }, 1200);
+    }, 400);
     return () => {
       cancelled = true;
       clearTimeout(timer);

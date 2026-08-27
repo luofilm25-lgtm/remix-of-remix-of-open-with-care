@@ -21,6 +21,7 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     let stop: (() => void) | undefined;
     let cancelled = false;
     void startGoogleOneTap({
+      context: "use",
       onSuccess: () => {
         toast.success("Signed in with Google");
         refresh();
