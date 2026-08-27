@@ -10,7 +10,7 @@ import { getLuoTitle, listEpisodes, listLuoTitles, type LuoLanguage } from "@/li
 import { SubscribeGate } from "@/components/youku/SubscribeGate";
 import { useSubscription } from "@/hooks/useSubscription";
 import { TitleActions } from "@/components/youku/TitleActions";
-import { MediaCard } from "@/components/youku/MediaCard";
+
 import { WatchSkeleton } from "@/components/youku/Skeletons";
 
 export function LuoWatch({ id, language }: { id: string; language: LuoLanguage }) {
