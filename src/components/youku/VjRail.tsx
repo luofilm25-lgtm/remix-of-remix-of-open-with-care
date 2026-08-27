@@ -1,28 +1,21 @@
 import { Link } from "@tanstack/react-router";
-import seniorPaulLogo from "@/assets/vj-senior-paul.png";
+import { Play } from "lucide-react";
 
 /**
- * Featured VJ chip — matches the category-card design: a wide rounded
- * rectangle with a tinted image backdrop and a bold label bottom-left.
+ * Featured VJ button — a clean glass pill (no artwork behind it) that sits
+ * low in the hero so it slightly overlaps the "Trending now" rail.
  */
 export function VjRail() {
   return (
     <nav aria-label="Featured VJ" className="flex items-center">
       <Link
         to="/luo"
-        className="group relative mt-4 flex h-[40px] w-[118px] shrink-0 items-end overflow-hidden rounded-2xl sm:mt-3 sm:h-[48px] sm:w-[152px] shadow-[0_6px_18px_rgba(0,0,0,0.5)] transition-transform duration-300 hover:-translate-y-0.5"
+        className="group inline-flex items-center gap-2 rounded-full border border-brand/50 bg-brand/20 px-3 py-1.5 text-[11px] font-bold text-foreground shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-brand hover:bg-brand/35 sm:px-4 sm:py-2 sm:text-[13px]"
       >
-        <img
-          src={seniorPaulLogo}
-          alt=""
-          aria-hidden
-          loading="eager"
-          className="absolute inset-0 size-full object-cover object-[center_40%] opacity-80"
-        />
-        <span className="absolute inset-0 bg-gradient-to-r from-[#4a1360]/90 via-[#4a1360]/55 to-transparent" />
-        <span className="relative z-10 truncate px-2 pb-1.5 text-[11px] sm:px-2.5 sm:pb-2 sm:text-[13px] font-bold text-foreground drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
-          VJ Senior Paul
+        <span className="grid size-5 place-items-center rounded-full bg-brand text-brand-foreground sm:size-6">
+          <Play className="size-3 fill-current" />
         </span>
+        VJ Senior Paul
       </Link>
     </nav>
   );

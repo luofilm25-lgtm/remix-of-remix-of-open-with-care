@@ -37,6 +37,19 @@ export function LuoLibrary({ language }: { language: LuoLanguage }) {
 
   const items = [...(q.data ?? [])].sort((a, b) => activity(b) - activity(a));
 
+  // Some legacy episode docs have no timestamp at all. For a recently active
+  // series we still tag its two newest episode numbers so the badge shows.
+  const cutoff = Date.now() - 3 * 24 * 60 * 60 * 1000;
+  for (const t of items) {
+    if (t.kind !== "series" || freshTags.has(t.id)) continue;
+    const eps = allEpisodes.filter((e) => e.title_id === t.id);
+    if (!eps.length) continue;
+    const untimed = eps.every((e) => !Number.isFinite(Date.parse(e.created_at)));
+    if (!untimed || activity(t) < cutoff) continue;
+    const numbers = [...new Set(eps.map((e) => e.episode))].sort((a, b) => a - b).slice(-2);
+    if (numbers.length) freshTags.set(t.id, numbers);
+  }
+
   // Series that got new episodes in the last 3 days sit on top; every other
   // title appears in exactly one section below (no duplicates across rails).
   const used = new Set<string>();

@@ -10,7 +10,7 @@ import { getLuoTitle, listEpisodes, listLuoTitles, type LuoLanguage } from "@/li
 import { SubscribeGate } from "@/components/youku/SubscribeGate";
 import { useSubscription } from "@/hooks/useSubscription";
 import { TitleActions } from "@/components/youku/TitleActions";
-import { MediaCard } from "@/components/youku/MediaCard";
+
 import { WatchSkeleton } from "@/components/youku/Skeletons";
 
 export function LuoWatch({ id, language }: { id: string; language: LuoLanguage }) {
@@ -180,25 +180,9 @@ export function LuoWatch({ id, language }: { id: string; language: LuoLanguage }
                 />
 
                 {!!related.length && (
-                  <section className="mt-8">
+                  <section className="mt-8 hidden lg:block">
                     <h2 className="mb-3 text-lg font-bold text-foreground">You may also like</h2>
-                    <div className="grid grid-cols-3 gap-x-2 gap-y-4 sm:grid-cols-4 sm:gap-x-3 sm:gap-y-5 md:grid-cols-5 xl:grid-cols-6">
-                      {related.map((item) => (
-                        <Link
-                          key={item.id}
-                          to={language === "luo" ? "/luo/$id" : "/luganda/$id"}
-                          params={{ id: item.id }}
-                          className="block"
-                        >
-                          <MediaCardShell
-                            poster={item.poster}
-                            label={item.title}
-                            badge={item.type === "series" ? "Series" : "Movie"}
-                            meta={[item.year, item.genre].filter(Boolean).join(" · ")}
-                          />
-                        </Link>
-                      ))}
-                    </div>
+                    <RelatedGrid items={related} language={language} />
                   </section>
                 )}
               </div>
@@ -251,11 +235,51 @@ export function LuoWatch({ id, language }: { id: string; language: LuoLanguage }
                   </div>
                 </aside>
               )}
+
+              {/* Mobile order: player → actions → episodes → you may also like */}
+              {!!related.length && (
+                <section className="lg:hidden">
+                  <h2 className="mb-3 text-lg font-bold text-foreground">You may also like</h2>
+                  <RelatedGrid items={related} language={language} />
+                </section>
+              )}
             </div>
           )}
         </main>
       </div>
       <MobileNav />
+    </div>
+  );
+}
+
+type RelatedItem = {
+  id: string;
+  title: string;
+  poster: string;
+  type: "series" | "movie";
+  year: string | null;
+  genre: string | null;
+};
+
+/** Grid of related posters, reused for the mobile and desktop placements. */
+function RelatedGrid({ items, language }: { items: RelatedItem[]; language: LuoLanguage }) {
+  return (
+    <div className="grid grid-cols-3 gap-x-2 gap-y-4 sm:grid-cols-4 sm:gap-x-3 sm:gap-y-5 md:grid-cols-5 xl:grid-cols-6">
+      {items.map((item) => (
+        <Link
+          key={item.id}
+          to={language === "luo" ? "/luo/$id" : "/luganda/$id"}
+          params={{ id: item.id }}
+          className="block"
+        >
+          <MediaCardShell
+            poster={item.poster}
+            label={item.title}
+            badge={item.type === "series" ? "Series" : "Movie"}
+            meta={[item.year, item.genre].filter(Boolean).join(" · ")}
+          />
+        </Link>
+      ))}
     </div>
   );
 }
