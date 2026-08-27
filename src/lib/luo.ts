@@ -34,6 +34,7 @@ export type LuoEpisode = {
   episode: number;
   name: string | null;
   video_url: string;
+  created_at: string;
 };
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
@@ -66,6 +67,7 @@ function toEpisode(r: Row): LuoEpisode {
     episode: Number(r.episode ?? r.episode_number ?? 1) || 1,
     name: str(r.name) ?? str(r.title),
     video_url: str(r.video_url) ?? "",
+    created_at: str(r.created_at) ?? nowIso(),
   };
 }
 
@@ -99,6 +101,28 @@ export async function listEpisodes(titleId: string) {
     .map(toEpisode)
     .filter((e) => e.title_id === titleId)
     .sort((a, b) => a.season - b.season || a.episode - b.episode);
+}
+
+/** All episodes across the library (used for the "new episode" badges). */
+export async function listAllEpisodes() {
+  const { data, error } = await fdb.from(EPISODES_TABLE).select("*");
+  if (error) throw error;
+  return (data as Row[]).map(toEpisode);
+}
+
+/** titleId -> episode numbers added within the last `days` days. */
+export function recentEpisodeTags(episodes: LuoEpisode[], days = 3) {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  const map = new Map<string, number[]>();
+  for (const e of episodes) {
+    const at = Date.parse(e.created_at);
+    if (!Number.isFinite(at) || at < cutoff) continue;
+    const list = map.get(e.title_id) ?? [];
+    list.push(e.episode);
+    map.set(e.title_id, list);
+  }
+  for (const [k, v] of map) map.set(k, [...new Set(v)].sort((a, b) => a - b).slice(-3));
+  return map;
 }
 
 /* ---------- admin writes (kept field-compatible with the legacy docs) ---------- */
