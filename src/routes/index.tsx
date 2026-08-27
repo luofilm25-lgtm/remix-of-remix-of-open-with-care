@@ -149,7 +149,7 @@ function HomePage() {
               {/* Bottom fade so the carousel melts behind the Trending rail instead of cutting off. */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-48 bg-gradient-to-t from-background via-background/75 to-transparent sm:h-56 lg:h-64" />
 
-              <div className="absolute bottom-0 left-0 top-28 z-20 flex max-w-xl flex-col justify-end gap-2 px-3 pb-48 sm:top-28 sm:pb-52 lg:top-16 lg:justify-end lg:gap-3 lg:px-8 lg:pb-36">
+              <div className="absolute bottom-0 left-0 top-28 z-20 flex max-w-xl flex-col justify-end gap-2 px-3 pb-40 sm:top-28 sm:pb-44 lg:top-16 lg:justify-end lg:gap-3 lg:px-8 lg:pb-28">
                 <h1 className="text-base font-black tracking-wide text-foreground drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] sm:text-lg lg:text-2xl">
                   {slide.title}
                 </h1>
