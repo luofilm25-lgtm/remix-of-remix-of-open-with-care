@@ -22,8 +22,20 @@ export function LuoLibrary({ language }: { language: LuoLanguage }) {
     staleTime: 60 * 1000,
   });
 
-  const items = q.data ?? [];
-  const freshTags = recentEpisodeTags(epQuery.data ?? [], 3);
+  const allEpisodes = epQuery.data ?? [];
+  const freshTags = recentEpisodeTags(allEpisodes, 3);
+
+  // A series counts as "new" when its newest episode is new, even if the show
+  // itself was uploaded long ago.
+  const lastEpisodeAt = new Map<string, number>();
+  for (const e of allEpisodes) {
+    const at = Date.parse(e.created_at) || 0;
+    if (at > (lastEpisodeAt.get(e.title_id) ?? 0)) lastEpisodeAt.set(e.title_id, at);
+  }
+  const activity = (t: LuoTitle) =>
+    Math.max(Date.parse(t.created_at) || 0, lastEpisodeAt.get(t.id) ?? 0);
+
+  const items = [...(q.data ?? [])].sort((a, b) => activity(b) - activity(a));
 
   // Series that got new episodes in the last 3 days sit on top; every other
   // title appears in exactly one section below (no duplicates across rails).
