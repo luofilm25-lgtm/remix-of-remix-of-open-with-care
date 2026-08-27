@@ -57,8 +57,20 @@ export function LuoWatch({ id, language }: { id: string; language: LuoLanguage }
 
   const related = useMemo(
     () =>
-      (siblings.data ?? [])
-        .filter((t) => t.id !== id)
+      (() => {
+        const all = (siblings.data ?? []).filter((t) => t.id !== id);
+        const g = (data?.genre ?? "").toLowerCase();
+        const sameGenre = g
+          ? all.filter((t) => (t.genre ?? "").toLowerCase() === g && t.kind === data?.kind)
+          : [];
+        const sameKind = all.filter((t) => t.kind === data?.kind && !sameGenre.includes(t));
+        const pool = [...sameGenre, ...sameKind, ...all.filter((t) => t.kind !== data?.kind)];
+        // Stable per-title rotation so each page shows a different mix.
+        let seed = 0;
+        for (const ch of id) seed = (seed * 31 + ch.charCodeAt(0)) % 100000;
+        const offset = pool.length > 18 ? seed % pool.length : 0;
+        return [...pool.slice(offset), ...pool.slice(0, offset)];
+      })()
         .slice(0, 18)
         .map((t) => ({
           id: t.id,
@@ -69,7 +81,7 @@ export function LuoWatch({ id, language }: { id: string; language: LuoLanguage }
           genre: t.genre,
           rating: null,
         })),
-    [siblings.data, id],
+    [siblings.data, id, data?.genre, data?.kind],
   );
 
   const nextEpisode = () => {
