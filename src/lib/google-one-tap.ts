@@ -80,9 +80,11 @@ export async function startGoogleOneTap(opts: {
   try {
     gsi.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-      context: "signin",
+      // Returning visitors are signed straight back in without a click; new
+      // visitors get the native "Continue as <name>" One Tap card.
+      auto_select: true,
+      cancel_on_tap_outside: false,
+      context: opts.context ?? "signin",
       itp_support: true,
       use_fedcm_for_prompt: true,
       callback: (res: GsiCredentialResponse) => {
@@ -93,6 +95,7 @@ export async function startGoogleOneTap(opts: {
       },
     });
     gsi.accounts.id.prompt();
+
   } catch (err) {
     opts.onError?.(err);
     return () => {};
