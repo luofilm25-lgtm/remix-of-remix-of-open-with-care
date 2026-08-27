@@ -131,14 +131,26 @@ function WatchPage() {
 
   const active = sources.data?.[sourceIndex];
   const episodeCount = useMemo(
-    () => title.seasons.find((s) => s.season === season)?.episodes ?? 0,
-    [title.seasons, season],
+    () => title?.seasons.find((s) => s.season === season)?.episodes ?? 0,
+    [title?.seasons, season],
   );
 
   const subtitles = (active?.captions ?? []).map((c) => ({
     label: c.label,
     src: subtitleUrl(c.url),
   }));
+
+  if (!title) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto max-w-[1200px] space-y-4 p-4">
+          <div className="aspect-video w-full animate-pulse rounded-2xl bg-muted" />
+          <div className="h-6 w-1/2 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
