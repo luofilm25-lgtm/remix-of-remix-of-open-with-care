@@ -70,7 +70,7 @@ export function TopBar() {
       {searchOpen && (
         <form
           onSubmit={submit}
-          className="absolute inset-x-3 top-14 flex h-10 items-center gap-2 rounded-full bg-background/90 px-4 shadow-lg ring-1 ring-border backdrop-blur-md lg:hidden"
+          className="absolute inset-x-3 top-[104px] flex h-10 items-center gap-2 rounded-full bg-background/90 px-4 shadow-lg ring-1 ring-border backdrop-blur-md lg:hidden"
         >
           <Icon3D name="search" className="size-4" />
           <input
