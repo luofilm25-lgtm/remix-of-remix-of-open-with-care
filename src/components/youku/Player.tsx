@@ -119,7 +119,16 @@ export function Player({
   /** Playback position carried over when the source (quality) changes. */
   const resumeRef = useRef<{ time: number; playing: boolean } | null>(null);
 
-  /* ---------------- source loading (mp4 / webm / hls) ---------------- */
+  /* ---------------- source loading (mp4 / webm / hls) ----------------
+     `src` points straight at the provider CDN so no video bytes cross our
+     own origin. If the CDN refuses the browser (CORS / hotlink block) we
+     retry once through the origin relay. */
+  const [relay, setRelay] = useState(false);
+  useEffect(() => {
+    setRelay(false);
+  }, [src]);
+  const playSrc = src ? (relay ? proxiedStreamUrl(src) : src) : "";
+
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
@@ -133,7 +142,7 @@ export function Player({
 
     // No source (e.g. locked behind membership): keep the element empty so no
     // network request is made and no stream can be sniffed from the page.
-    if (!src) {
+    if (!playSrc) {
       try {
         hlsRef.current?.destroy?.();
       } catch {
@@ -147,13 +156,19 @@ export function Player({
       return;
     }
 
-    const isHls = isHlsUrl(src);
+    const failover = () => setRelay((prev) => prev || true);
+
+    const isHls = isHlsUrl(playSrc);
     if (!isHls) {
-      video.src = src;
+      video.src = playSrc;
+      if (!relay) {
+        video.addEventListener("error", failover, { once: true });
+        return () => video.removeEventListener("error", failover);
+      }
       return;
     }
     if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = src;
+      video.src = playSrc;
       return;
     }
 
@@ -162,8 +177,11 @@ export function Player({
       if (cancelled || !Hls.isSupported()) return;
       const hls = new Hls({ enableWorker: true, capLevelToPlayerSize: false });
       hlsRef.current = hls;
-      hls.loadSource(src);
+      hls.loadSource(playSrc);
       hls.attachMedia(video);
+      hls.on(Hls.Events.ERROR, (_e: unknown, d: { fatal?: boolean; type?: string }) => {
+        if (d?.fatal && !relay) failover();
+      });
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setLevels(
           hls.levels.map((l: { height?: number; bitrate: number }, i: number) => ({
@@ -196,7 +214,7 @@ export function Player({
       hlsRef.current?.destroy?.();
       hlsRef.current = null;
     };
-  }, [src]);
+  }, [playSrc, relay]);
 
   /* ---------------- download speed (progressive sources) ---------------- */
   useEffect(() => {
