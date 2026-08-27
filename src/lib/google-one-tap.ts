@@ -73,7 +73,10 @@ export function oneTapAvailable() {
 export async function startGoogleOneTap(opts: {
   onSuccess?: () => void;
   onError?: (err: unknown) => void;
+  /** One Tap wording: "signin" | "signup" | "use". */
+  context?: "signin" | "signup" | "use";
 }): Promise<() => void> {
+
   if (!oneTapAvailable()) return () => {};
   const gsi = await loadGsi();
   if (!gsi?.accounts?.id) return () => {};
