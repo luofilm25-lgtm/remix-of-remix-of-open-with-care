@@ -41,6 +41,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "The Summer I Turned Pretty",
       "Wednesday",
     ],
+    keywords: ["popular series 2026","new series 2026","top tv show","trending series"],
     type: "series",
   },
   {
@@ -57,6 +58,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Man of War",
       "Kill Trip",
     ],
+    keywords: ["popular movie 2026","new movie 2026","box office","trending movie"],
     type: "movie",
   },
   {
@@ -75,6 +77,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Blood & Water",
       "The Lord of the Rings: The Rings of Power",
     ],
+    keywords: ["trending now","most popular 2026","top 10","hit series"],
     ranked: true,
   },
   {
@@ -89,6 +92,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Ruthless",
       "Bruh",
     ],
+    keywords: ["bet plus","tyler perry","black drama series","urban drama"],
   },
   {
     title: "Action & Thriller",
@@ -102,6 +106,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "M.I.A.",
       "Prisoner",
     ],
+    keywords: ["action thriller 2026","thriller series","spy thriller","crime thriller"],
   },
   {
     title: "Gangster",
@@ -115,6 +120,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "The Family Business",
       "Godfather of Harlem",
     ],
+    keywords: ["gangster series","mafia crime","crime family drama","drug empire"],
   },
   {
     title: "C-Drama",
@@ -152,6 +158,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "His Dark Materials",
       "Rings of Power",
     ],
+    keywords: ["epic fantasy series","medieval fantasy","dragons kingdom","sword sorcery"],
     type: "series",
     avoidGenre: /animation|anime/i,
   },
@@ -167,6 +174,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Seinfeld",
       "Two and a Half Men",
     ],
+    keywords: ["sitcom","comedy series","family sitcom","funny series"],
   },
   {
     title: "Teen Romance",
@@ -180,6 +188,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Off Campus",
       "Euphoria",
     ],
+    keywords: ["teen romance","high school romance","young love series","college romance"],
   },
   {
     title: "Superhero Series",
@@ -195,6 +204,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Superman & Lois",
       "The Flash",
     ],
+    keywords: ["superhero series","comic book series","dc series","marvel series"],
     type: "series",
   },
   {
@@ -211,6 +221,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Bel-Air",
       "Queen Sugar",
     ],
+    keywords: ["black series drama","african american series","urban series","hood drama"],
     type: "series",
   },
   {
@@ -232,6 +243,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Teen Wolf",
       "Fate: The Winx Saga",
     ],
+    keywords: ["teen fantasy series","supernatural teen","magic school series","young adult fantasy"],
     avoidGenre: /animation|anime/i,
   },
   {
@@ -246,6 +258,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Re: Zero - Starting Life in Another World",
       "Baki-Dou",
     ],
+    keywords: ["anime english dubbed","anime series 2026","shonen anime","isekai anime"],
   },
   {
     title: "K-Drama",
@@ -316,16 +329,18 @@ async function lookupTitle(title: string, section: HomeSection): Promise<Catalog
   return best && best.s >= 20 ? best.item : null;
 }
 
-/** Fill a rail either from an explicit title list or from merged search feeds. */
-export async function fetchSection(section: HomeSection): Promise<CatalogItem[]> {
-  if (section.titles?.length) {
-    const found = await Promise.all(section.titles.map((t) => lookupTitle(t, section)));
-    return dedupe(found.filter((i): i is CatalogItem => !!i));
-  }
+/** Minimum items a rail should carry before we stop backfilling. */
+const TARGET = 18;
 
-
+/** Live search feed for a section, filtered by the catalog's own metadata. */
+async function fetchFeed(section: HomeSection): Promise<CatalogItem[]> {
+  const keywords = section.keywords ?? [];
+  if (!keywords.length) return [];
   const batches = await Promise.all(
-    (section.keywords ?? []).map((q) => searchCatalog(q, 1).catch(() => [] as CatalogItem[])),
+    keywords.flatMap((q) => [
+      searchCatalog(q, 1).catch(() => [] as CatalogItem[]),
+      searchCatalog(q, 2).catch(() => [] as CatalogItem[]),
+    ]),
   );
 
   const keep = (item: CatalogItem) =>
@@ -337,9 +352,30 @@ export async function fetchSection(section: HomeSection): Promise<CatalogItem[]>
 
   const filtered = batches.map((list) => list.filter(keep));
 
+  // Round-robin so every keyword contributes, keeping rails varied and fresh.
   const merged: CatalogItem[] = [];
   for (let i = 0; i < 20; i += 1) {
     for (const list of filtered) if (list[i]) merged.push(list[i]!);
   }
-  return dedupe(merged).slice(0, 24);
+  return dedupe(merged);
 }
+
+/**
+ * Fill a rail. Curated titles come first (so the well-known line-up is exact),
+ * then the rail is topped up from live catalog searches — that way every
+ * section is full and refreshes with whatever the catalog is pushing today
+ * instead of being a short, static list.
+ */
+export async function fetchSection(section: HomeSection): Promise<CatalogItem[]> {
+  const [curated, feed] = await Promise.all([
+    section.titles?.length
+      ? Promise.all(section.titles.map((t) => lookupTitle(t, section))).then((r) =>
+          r.filter((i): i is CatalogItem => !!i),
+        )
+      : Promise.resolve([] as CatalogItem[]),
+    fetchFeed(section),
+  ]);
+
+  return dedupe([...curated, ...feed]).slice(0, Math.max(TARGET, 24));
+}
+

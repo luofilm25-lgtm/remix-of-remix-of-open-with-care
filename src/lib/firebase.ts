@@ -19,7 +19,8 @@ export const firebaseConfig = {
  * → Google → Web SDK configuration). Public value, safe in client code.
  */
 export const GOOGLE_CLIENT_ID: string =
-  (import.meta.env['VITE_GOOGLE_CLIENT_ID'] as string | undefined) ?? "";
+  "119968590647-57uhsuqkcv2lv6l9dm6vd0i5tsk0vvjd.apps.googleusercontent.com";
+
 
 let _app: FirebaseApp | undefined;
 
